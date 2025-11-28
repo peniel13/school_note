@@ -1,0 +1,241 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Bulletin de {{ eleve.nom }}</title>
+<style>
+  @page {
+    size: A4;
+    margin: 1.2cm;
+  }
+
+  body {
+    font-family: "Times New Roman", serif;
+    font-size: 12px;
+    color: #000;
+  }
+
+  .bulletin {
+    border: 2px solid #000;
+    padding: 10px;
+    width: 100%;
+  }
+
+  .header {
+    text-align: center;
+    border-bottom: 2px solid #000;
+    position: relative;
+    padding-bottom: 5px;
+  }
+
+  .header img {
+    position: absolute;
+    top: 5px;
+    width: 70px;
+    height: 70px;
+  }
+
+  .header .left-logo {
+    left: 10px;
+  }
+
+  .header .right-logo {
+    right: 10px;
+  }
+
+  .header h1 {
+    font-size: 14px;
+    margin: 2px 0;
+  }
+
+  .header h2 {
+    font-size: 12px;
+    margin: 2px 0;
+  }
+
+  .info {
+    margin-top: 8px;
+    font-size: 12px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    font-size: 11px;
+    text-align: center;
+  }
+
+  th, td {
+    border: 1px solid #000;
+    padding: 3px;
+  }
+
+  th {
+    background: #f2f2f2;
+    font-weight: bold;
+  }
+
+  .section-title {
+    background: #eaeaea;
+    text-align: left;
+    font-weight: bold;
+  }
+
+  .signatures {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+    font-size: 11px;
+  }
+
+  .signature-box {
+    width: 30%;
+    text-align: center;
+  }
+
+  .note {
+    font-size: 10px;
+    margin-top: 12px;
+  }
+</style>
+</head>
+<body>
+<div class="bulletin">
+
+  <div class="header">
+    <img src="{% static 'img/logo_left.png' %}" class="left-logo">
+    <img src="{% static 'img/logo_right.png' %}" class="right-logo">
+    <h1>RÉPUBLIQUE DÉMOCRATIQUE DU CONGO</h1>
+    <h2>MINISTÈRE DE L’ENSEIGNEMENT PRIMAIRE, SECONDAIRE ET TECHNIQUE</h2>
+  </div>
+
+  <div class="info">
+    <div><b>ÉCOLE :</b> {{ school.nom }}</div>
+    <div><b>ÉLÈVE :</b> {{ eleve.nom }}</div>
+    <div><b>VILLE :</b> {{ school.ville.nom }}</div>
+    <div><b>CLASSE :</b> {{ classe.nom }}</div>
+    <div><b>Année scolaire :</b> {{ school.annee_scolaire }}</div>
+    <div><b>Code élève :</b> {{ eleve.code|default:"—" }}</div>
+  </div>
+
+  <h3 class="center" style="text-align:center; margin-top:8px;">
+    BULLETIN — {{ semestres.0.nom|upper }} / {{ semestres.1.nom|upper }}
+  </h3>
+
+  <table>
+    <thead>
+      <tr>
+        <th rowspan="3">BRANCHES</th>
+        <th colspan="4">{{ semestres.0.nom }}</th>
+        <th colspan="4">{{ semestres.1.nom }}</th>
+        <th rowspan="3">T.G</th>
+        <th rowspan="3">%</th>
+        <th rowspan="3">Sign. Prof</th>
+      </tr>
+      <tr>
+        <th colspan="4">1<sup>er</sup> et 2<sup>ème</sup> P.</th>
+        <th colspan="4">3<sup>ème</sup> et 4<sup>ème</sup> P.</th>
+      </tr>
+      <tr>
+        <th>1<sup>er</sup> P</th><th>2<sup>ème</sup> P</th><th>Exam</th><th>Tot.</th>
+        <th>3<sup>ème</sup> P</th><th>4<sup>ème</sup> P</th><th>Exam</th><th>Tot.</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <!-- MAXIMA -->
+      <tr class="section-title"><td colspan="12">MAXIMA</td></tr>
+      <tr>
+        <td></td>
+        {% for semestre in semestres %}
+          {% for p in periodes_par_semestre|get_item:semestre %}
+            <td>{{ maxima_by_periode|get_item:p|default:"-"|floatformat:2 }}</td>
+          {% endfor %}
+          <td>{{ totaux_semestre|get_item:semestre|floatformat:2 }}</td>
+        {% endfor %}
+        <td>{{ total_general_attendu|floatformat:2 }}</td>
+        <td>{{ pourcentage_total|floatformat:2 }} %</td>
+        <td>—</td>
+      </tr>
+
+      <!-- Matières -->
+      {% for matiere in matieres %}
+      <tr>
+        <td style="text-align:left;">{{ matiere.nom }}</td>
+        {% for semestre in semestres %}
+          {% for p in periodes_par_semestre|get_item:semestre %}
+            <td>{{ notes_by_matiere|get_item:matiere|get_item:p|default:"-" }}</td>
+          {% endfor %}
+          <td>{{ tot_matieres_semestre|get_item:matiere|get_item:semestre|floatformat:2 }}</td>
+        {% endfor %}
+        <td>{{ tot_matieres_global|get_item:matiere|floatformat:2 }}</td>
+        <td>—</td>
+        <td>—</td>
+      </tr>
+      {% endfor %}
+
+      <!-- Maximas généraux -->
+      <tr class="section-title"><td colspan="12">MAXIMAS GÉNÉRAUX</td></tr>
+      <tr>
+        <td>TOTAUX</td>
+        {% for semestre in semestres %}
+          {% for p in periodes_par_semestre|get_item:semestre %}
+            <td>{{ maxima_generaux|get_item:p|floatformat:2 }}</td>
+          {% endfor %}
+          <td>{{ totaux_semestre|get_item:semestre|floatformat:2 }}</td>
+        {% endfor %}
+        <td>{{ total_general_attendu|floatformat:2 }}</td>
+        <td>{{ pourcentage_total|floatformat:2 }} %</td>
+        <td>—</td>
+      </tr>
+      <tr>
+        <td>POURCENTAGE</td>
+        {% for semestre in semestres %}
+          {% for p in periodes_par_semestre|get_item:semestre %}
+            <td>{{ pourcentage_periode|get_item:p|floatformat:2 }}%</td>
+          {% endfor %}
+          <td>{{ pourcentage_semestre|get_item:semestre|floatformat:2 }}%</td>
+        {% endfor %}
+        <td>{{ pourcentage_total|floatformat:2 }}%</td>
+        <td>—</td>
+        <td>—</td>
+      </tr>
+      <tr>
+        <td>PLACE / NBRE D'ÉLÈVES</td>
+        {% for semestre in semestres %}
+          {% for p in periodes_par_semestre|get_item:semestre %}
+            <td>{{ rang_par_periode|get_item:p }}</td>
+          {% endfor %}
+          <td>{{ rang_par_semestre|get_item:semestre }}</td>
+        {% endfor %}
+        <td>{{ rang_general|default:"—" }}</td>
+        <td>—</td>
+        <td>—</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="signatures">
+    <div class="signature-box">
+      Signature de l’élève <br><br> __________________
+    </div>
+    <div class="signature-box">
+      Sceau de l’école
+    </div>
+    <div class="signature-box">
+      Chef d’établissement <br><br> __________________
+    </div>
+  </div>
+
+  <div class="note">
+    * L’élève passe si la moyenne générale ≥ 50 %. <br>
+    * Bulletin sans valeur s’il est raturé ou modifié. <br>
+    Fait à {{ school.ville.nom }}, le {{ today|date:"d/m/Y" }}.
+  </div>
+</div>
+</body>
+</html>

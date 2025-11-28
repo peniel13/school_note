@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% load custom_filters %} {# pour add_class #}
+
+{% block title %}Fondateur de l'École{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto py-8">
+    <h2 class="text-3xl font-bold mb-6 text-center text-white">{{ school.nom }}</h2>
+
+    {% if fondateur %}
+    <h3 class="text-xl font-semibold mb-4 text-white text-center mx-auto">
+        Informations du fondateur
+    </h3>
+    
+        <div class="bg-gray-800 p-6 rounded-lg text-white mb-6 space-y-4">
+
+            <p><strong>Nom complet :</strong> {{ fondateur.nom_complet }}
+                <a href="#" onclick="showEdit()" class="text-yellow-400 ml-2 text-sm">Modifier</a>
+            </p>
+            <p><strong>Biographie :</strong> {{ fondateur.biographie|default:"-" }}
+                <a href="#" onclick="showEdit()" class="text-yellow-400 ml-2 text-sm">Modifier</a>
+            </p>
+            <p><strong>Message pour l'année :</strong> {{ fondateur.message_annee|default:"-" }}
+                <a href="#" onclick="showEdit()" class="text-yellow-400 ml-2 text-sm">Modifier</a>
+            </p>
+            <p><strong>Vision :</strong> {{ fondateur.vision|default:"-" }}
+                <a href="#" onclick="showEdit()" class="text-yellow-400 ml-2 text-sm">Modifier</a>
+            </p>
+
+            <!-- Photo profil -->
+            <div>
+                <p class="font-semibold">Photo de profil :</p>
+                {% if fondateur.photo_profil %}
+                    <img src="{{ fondateur.photo_profil.url }}" class="w-32 h-32 object-cover rounded mb-1">
+                {% else %}
+                    <p class="text-gray-400">Aucune photo</p>
+                {% endif %}
+                <a href="#" onclick="showEdit()" class="text-yellow-400 text-sm">Modifier</a>
+            </div>
+
+        </div>
+    {% endif %}
+
+    <!-- Formulaire création / modification -->
+    <div id="editForm" class="bg-gray-700 p-6 rounded-lg mb-6 {% if fondateur %}hidden{% endif %} space-y-6">
+        <h3 class="text-xl font-semibold text-yellow-400 mb-4">
+            {% if fondateur %}Modifier le fondateur{% else %}Ajouter un fondateur{% endif %}
+        </h3>
+
+        <form method="POST" enctype="multipart/form-data" class="space-y-6">
+            {% csrf_token %}
+
+            <div>
+                {{ form.nom_complet.label_tag }}
+                {{ form.nom_complet|add_class:"w-full px-4 py-2 mt-2 rounded-md bg-gray-900 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" }}
+            </div>
+            <div>
+                {{ form.biographie.label_tag }}
+                {{ form.biographie|add_class:"w-full px-4 py-2 mt-2 rounded-md bg-gray-900 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" }}
+            </div>
+            <div>
+                {{ form.message_annee.label_tag }}
+                {{ form.message_annee|add_class:"w-full px-4 py-2 mt-2 rounded-md bg-gray-900 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" }}
+            </div>
+            <div>
+                {{ form.vision.label_tag }}
+                {{ form.vision|add_class:"w-full px-4 py-2 mt-2 rounded-md bg-gray-900 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" }}
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-white">Photo de profil</label>
+                {% if fondateur and fondateur.photo_profil %}
+                    <img src="{{ fondateur.photo_profil.url }}" class="w-32 h-32 object-cover rounded mb-1">
+                {% endif %}
+                {{ form.photo_profil|add_class:"w-full mt-2" }}
+            </div>
+
+            <div>
+                <button type="submit"
+                        class="w-full bg-yellow-500 hover:bg-yellow-600 text-white py-2 rounded-md text-sm font-medium">
+                    {% if fondateur %}Enregistrer{% else %}Créer{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+
+    {% if fondateur %}
+    <div class="text-center mb-6">
+        <button onclick="showEdit()" class="bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-4 rounded-md">
+            Modifier les infos du fondateur
+        </button>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function showEdit() {
+    document.getElementById('editForm').classList.remove('hidden');
+    document.getElementById('editForm').scrollIntoView({behavior: "smooth"});
+}
+</script>
+{% endblock %}

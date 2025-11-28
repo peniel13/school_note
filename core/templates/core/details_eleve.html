@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% load custom_tags %}
+{% block title %}Détails de l'Élève{% endblock %}
+
+{% block content %}
+<div class="bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+    <h1 class="text-4xl font-semibold text-white text-center mb-8">Détails de l'Élève : {{ eleve.nom }}</h1>
+    
+    <!-- Informations de l'élève -->
+    <div class="bg-gray-800 rounded-lg shadow-lg p-8 mb-8 flex flex-col md:flex-row gap-6 items-start">
+    
+        <!-- Avatar -->
+        <div class="flex-shrink-0">
+            {% if eleve.image_profil %}
+                <img src="{{ eleve.image_profil.url }}" 
+                     alt="{{ eleve.nom }}" 
+                     class="w-24 h-24 rounded-full object-cover cursor-pointer"
+                     onclick="openProfileModal('{{ eleve.image_profil.url }}')">
+            {% else %}
+                <img src="https://bootdey.com/img/Content/avatar/avatar7.png" 
+                     alt="Avatar" 
+                     class="w-24 h-24 rounded-full object-cover cursor-pointer"
+                     onclick="openProfileModal('https://bootdey.com/img/Content/avatar/avatar7.png')">
+            {% endif %}
+        </div>
+    
+        <!-- Informations personnelles -->
+        <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <p class="text-lg text-gray-300"><strong>Nom Complet :</strong> {{ eleve.nom }}</p>
+                <p class="text-lg text-gray-300"><strong>École :</strong> {{ eleve.school.nom}}</p>
+                {% if eleve.email %}
+                    <p class="text-lg text-gray-300"><strong>Email :</strong> {{ eleve.email }}</p>
+                {% endif %}
+                <p class="text-lg text-gray-300"><strong>Classe :</strong> {{ eleve.classe.nom }}</p>
+                {% if eleve.age %}
+                    <p class="text-lg text-gray-300"><strong>Âge :</strong> {{ eleve.age }} ans</p>
+                {% endif %}
+            </div>
+            <div>
+                {% if eleve.adresse %}
+                    <p class="text-lg text-gray-300"><strong>Adresse :</strong> {{ eleve.adresse }}</p>
+                {% endif %}
+                {% if eleve.telephone %}
+                    <p class="text-lg text-gray-300"><strong>Téléphone :</strong> {{ eleve.telephone }}</p>
+                {% endif %}
+                {% if eleve.date_inscription %}
+                    <p class="text-lg text-gray-300"><strong>Date d'Inscription :</strong> {{ eleve.date_inscription|date:"d M Y" }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    {% comment %} <div class="bg-gray-800 rounded-lg shadow-lg p-8 mb-8">
+        <h2 class="text-2xl font-semibold text-white mb-4">Informations Personnelles</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <p class="text-lg text-gray-300"><strong>Nom Complet :</strong> {{ eleve.nom }}</p>
+                <p class="text-lg text-gray-300"><strong>Ecole :</strong> {{ eleve.school.nom}}</p>
+                {% if eleve.email %}
+                <p class="text-lg text-gray-300"><strong>Email :</strong> {{ eleve.email }}</p>
+                {% endif %}
+                <p class="text-lg text-gray-300"><strong>Classe :</strong> {{ eleve.classe.nom }}</p>
+                {% if eleve.age %}
+                <p class="text-lg text-gray-300"><strong>Âge :</strong> {{ eleve.age }} ans</p>
+                {% endif %}
+            </div>
+            <div>
+                {% if eleve.adresse %}
+                <p class="text-lg text-gray-300"><strong>Adresse :</strong> {{ eleve.adresse }}</p>
+                {% endif %}
+                {% if eleve.telephone %}
+                <p class="text-lg text-gray-300"><strong>Téléphone :</strong> {{ eleve.telephone }}</p>
+                {% endif %}
+                {% if eleve.date_inscription %}
+                <p class="text-lg text-gray-300"><strong>Date d'Inscription :</strong> {{ eleve.date_inscription|date:"d M Y" }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div> {% endcomment %}
+     <!-- Card de redirection vers la situation de l'élève -->
+    {% comment %} <div class="bg-gray-800 rounded-lg shadow-lg p-8 mb-8">
+        <h2 class="text-2xl font-semibold text-white mb-4">Voir la Situation de l'Élève</h2>
+        <p class="text-lg text-gray-300 mb-4">Consultez la situation détaillée de cet élève par matière et par période.</p>
+        <a href="{% url 'situations_eleve' eleve.id %}" class="block bg-indigo-600 hover:bg-indigo-700 text-white text-center p-4 rounded-lg shadow-lg transition duration-200">
+            Voir la Situation de l'Élève
+        </a>
+    </div> {% endcomment %}
+    {% if not eleve.eleve or eleve.eleve != request.user %}
+<div class="bg-gray-800 rounded-lg shadow-lg p-8 mb-8">
+    <h2 class="text-2xl font-semibold text-white mb-4">Voir la Situation de l'Élève</h2>
+    <p class="text-lg text-gray-300 mb-4">
+        Consultez la situation détaillée de cet élève par matière et par période.
+    </p>
+    <a href="{% url 'bulletin_eleve' eleve.id %}" 
+       class="block bg-indigo-600 hover:bg-indigo-700 text-white text-center p-4 rounded-lg shadow-lg transition duration-200">
+        Voir la Situation de bulletin
+    </a>
+</div>
+{% endif %}
+
+    {% comment %} <div class="bg-gray-800 rounded-lg shadow-lg p-8 mb-8">
+        <h2 class="text-2xl font-semibold text-white mb-4">Voir la Situation de l'Élève</h2>
+        <p class="text-lg text-gray-300 mb-4">Consultez la situation détaillée de cet élève par matière et par période.</p>
+        <a href="{% url 'bulletin_eleve' eleve.id %}" class="block bg-indigo-600 hover:bg-indigo-700 text-white text-center p-4 rounded-lg shadow-lg transition duration-200">
+            Voir la Situation de bultin 
+        </a>
+    </div> {% endcomment %}
+    {% comment %} <div class="bg-gray-800 rounded-lg shadow-lg p-8 mb-8">
+        <h2 class="text-2xl font-semibold text-white mb-4">Voir la Situation de l'Élève</h2>
+        <p class="text-lg text-gray-300 mb-4">Consultez la situation détaillée de cet élève par matière et par période.</p>
+        <a href="{% url 'bulletin_eleve' eleve.id %}" class="block bg-indigo-600 hover:bg-indigo-700 text-white text-center p-4 rounded-lg shadow-lg transition duration-200">
+            Voir la Situation de branche
+        </a>
+    </div> {% endcomment %}
+    <!-- Notations par Période -->
+    <div class="bg-gray-800 rounded-lg shadow-lg p-8">
+        <h2 class="text-2xl font-semibold text-white mb-4">Notations par Période</h2>
+    
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {% for periode, data in notations_par_periode.items %}
+            <a href="{% url 'details_periode' eleve.id periode.id %}" class="block bg-gray-700 rounded-lg shadow-lg overflow-hidden hover:bg-indigo-600 transition duration-200">
+                <div class="p-6 text-center">
+                    <h3 class="text-xl text-indigo-500 mb-2">{{ periode.nom }}</h3>
+                    <p class="text-lg text-white">Pourcentage : {{ data.pourcentage|floatformat:2 }}%</p>
+                    <p class="text-gray-300">Total Attendu : {{ data.total_attendu }}</p>
+                    {% if data.total_obtenu < data.total_attendu|floatdivide:2 %}
+                        <p class="text-red-500 font-bold">Total Obtenu : {{ data.total_obtenu }}</p>
+                    {% else %}
+                        <p class="text-gray-300">Total Obtenu : {{ data.total_obtenu }}</p>
+                    {% endif %}
+                </div>
+            </a>
+            {% empty %}
+            <p class="text-gray-400 text-center">Aucune période trouvée.</p>
+            {% endfor %}
+        </div>
+    </div>
+    
+
+    
+</div>
+{% endblock %}

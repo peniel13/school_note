@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+{% load custom_tags %}
+
+{% block title %}Détails de la Période{% endblock %}
+
+{% block content %}
+<div class="bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-5xl mx-auto bg-gray-800 rounded-lg shadow-lg p-8">
+        <h2 class="text-3xl font-semibold text-center text-white mb-6">
+            {{ matiere.nom }} – {{ periode.nom }} – (Classe : {{ classe.nom }})
+        </h2>
+
+        <p class="text-gray-300 text-center mb-4">
+            Professeur : <strong>{{ matiere.prof.get_full_name }}</strong> | Email : <strong>{{ matiere.prof.email }}</strong>
+        </p>
+
+        {% if notations %}
+        <div class="overflow-x-auto mb-4">
+            <table class="min-w-full divide-y divide-gray-700">
+                <thead>
+                    <tr class="bg-gray-200">
+                        <th class="px-4 py-2 text-left text-black">Élève</th>
+                        <th class="px-4 py-2 text-left text-black">Note obtenue</th>
+                        <th class="px-4 py-2 text-left text-black">Note attendue</th>
+                        <th class="px-4 py-2 text-left text-black">Modifier</th>
+                        <th class="px-4 py-2 text-left text-black">Supprimer</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-600">
+                    {% for n in notations %}
+                    <tr>
+                        <!-- Nom de l'élève cliquable -->
+                        <td class="px-4 py-2 text-indigo-400 hover:underline cursor-pointer">
+                            <a href="{% url 'detail_epreuve_eleve' n.eleve.id matiere.id periode.id %}">
+                                {{ n.eleve.nom }}
+                            </a>
+                        </td>
+                        
+                        {% with seuil=n.note_attendue|floatdivide:2 %}
+                            {% if n.note_obtenue < seuil %}
+                                <td class="px-4 py-2 text-red-500 font-bold">{{ n.note_obtenue }}</td>
+                            {% else %}
+                                <td class="px-4 py-2 text-gray-300">{{ n.note_obtenue }}</td>
+                            {% endif %}
+                        {% endwith %}
+                        
+                        <td class="px-4 py-2 text-gray-300">{{ n.note_attendue }}</td>
+                        
+                        <td class="px-4 py-2">
+                            {% if request.user == matiere.prof %}
+                                <a href="{% url 'modifier_notation' n.id %}" class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded-md text-sm">Modifier</a>
+                            {% endif %}
+                        </td>
+                        
+                        <td class="px-4 py-2">
+                            {% if request.user == matiere.prof %}
+                                <button type="button"
+                                    onclick="confirmDeleteNotation('{{ n.id }}', '{{ n.eleve.nom }}')"
+                                    class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-sm">
+                                    Supprimer
+                                </button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        
+
+        <div class="mt-4 text-center">
+            <a href="{% url 'liste_notation_pdf' matiere.id periode.id %}"
+               class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition duration-200">
+                Télécharger la liste des notes
+            </a>
+        </div>
+
+        {% else %}
+        <p class="text-gray-400 text-center mt-6">Aucune note enregistrée pour cette période.</p>
+        {% endif %}
+
+        <div class="mt-6 text-center">
+            <a href="{% url 'matiere_detail' matiere.id %}" class="text-indigo-400 hover:underline">← Retour à la matière</a>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+function confirmDeleteNotation(notationId, eleveNom) {
+    Swal.fire({
+        title: 'Êtes-vous sûr ?',
+        text: `La note de "${eleveNom}" sera supprimée !`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc2626',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Oui, supprimer',
+        cancelButtonText: 'Annuler'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `/user/notation/${notationId}/supprimer/`;
+            form.innerHTML = `{% csrf_token %}`;
+            document.body.appendChild(form);
+            form.submit();
+        }
+    });
+}
+</script>
+{% endblock %}
+
+
+{% comment %} {% extends "base.html" %}
+{% block title %}Détails de la Période{% endblock %}
+{% block content %}
+<div class="min-h-screen bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-5xl mx-auto bg-gray-800 rounded-lg shadow-lg p-8">
+        <h2 class="text-3xl font-semibold text-center text-white mb-6">
+            {{ matiere.nom }} – {{ periode.nom }} – (Classe : {{ classe.nom }})
+        </h2>
+
+        {% if notations %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-700">
+                <thead>
+                    <tr class="bg-gray-800">
+                        <th class="px-4 py-2 text-left text-white">Élève</th>
+                        <th class="px-4 py-2 text-left text-white">Note obtenue</th>
+                        <th class="px-4 py-2 text-left text-white">Note attendue</th>
+                        <th class="px-4 py-2 text-left text-white">Modifier</th>
+                        <th class="px-4 py-2 text-left text-white">Supprimer</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-700">
+                    {% for n in notations %}
+                    <tr>
+                        <td class="px-4 py-2 text-white">{{ n.eleve.nom }}</td>
+                        <td class="px-4 py-2 text-white">{{ n.note_obtenue }}</td>
+                        <td class="px-4 py-2 text-white">{{ n.note_attendue }}</td>
+                        <td class="px-4 py-2">
+                            {% if request.user == matiere.prof %}
+                                <a href="{% url 'modifier_notation' n.id %}" class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded-md text-sm">Modifier</a>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-2">
+                            {% if request.user == matiere.prof %}
+                                <button type="button"
+                                    onclick="confirmDeleteNotation('{{ n.id }}', '{{ n.eleve.nom }}')"
+                                    class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-sm">
+                                    Supprimer
+                                </button>
+                            {% endif %}
+                        </td>
+                        
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-gray-400 text-center mt-6">Aucune note enregistrée pour cette période.</p>
+        {% endif %}
+        <div class="mt-4 text-center">
+            <a href="{% url 'liste_notation_pdf' matiere.id periode.id %}"
+               class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition duration-200">
+                Télécharger la liste des notes
+            </a>
+        </div>
+        
+        <div class="mt-6 text-center">
+            <a href="{% url 'matiere_detail' matiere.id %}" class="text-indigo-400 hover:underline">← Retour à la matière</a>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+function confirmDeleteNotation(notationId, eleveNom) {
+    Swal.fire({
+        title: 'Êtes-vous sûr ?',
+        text: `La note de "${eleveNom}" sera supprimée !`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc2626',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Oui, supprimer',
+        cancelButtonText: 'Annuler'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Création dynamique du formulaire avec POST
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `/user/notation/${notationId}/supprimer/`;  // action de suppression
+            form.innerHTML = `
+                {% csrf_token %}
+            `;
+            document.body.appendChild(form);
+            form.submit();
+        }
+    });
+}
+</script>
+
+{% endblock %} {% endcomment %}

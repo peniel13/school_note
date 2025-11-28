@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Modifier Notation{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-4xl mx-auto bg-gray-800 rounded-lg shadow-lg p-8">
+        <h2 class="text-3xl font-semibold text-center text-white mb-6">
+            Modifier la notation – {{ notation.eleve.nom }} ({{ matiere.nom }})
+        </h2>
+
+        {% if messages %}
+        <div class="mb-4">
+            {% for message in messages %}
+                <div class="text-center {% if message.tags == 'error' %}text-red-500{% else %}text-green-500{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <form method="POST" class="space-y-6">
+            {% csrf_token %}
+
+            <!-- Élève (non modifiable) -->
+            <div>
+                <label class="block text-sm font-medium text-white">Élève</label>
+                <input type="text" value="{{ notation.eleve.nom }}" class="w-full px-4 py-2 mt-2 text-gray-900 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none" disabled>
+            </div>
+
+            <!-- Période (non modifiable) -->
+            <div>
+                <label class="block text-sm font-medium text-white">Période</label>
+                <input type="text" value="{{ periode.nom }}" class="w-full px-4 py-2 mt-2 text-gray-900 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none" disabled>
+            </div>
+
+            <!-- Note Attendue -->
+            <div>
+                <label for="note_attendue" class="block text-sm font-medium text-white">Note Attendue</label>
+                <input type="number" name="note_attendue" id="note_attendue" value="{{ notation.note_attendue }}" class="w-full px-4 py-2 mt-2 text-gray-900 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none" min="0" required>
+            </div>
+
+            <!-- Note Obtenue -->
+            <div>
+                <label for="note_obtenue" class="block text-sm font-medium text-white">Note Obtenue</label>
+                <input type="number" name="note_obtenue" id="note_obtenue" value="{{ notation.note_obtenue }}" class="w-full px-4 py-2 mt-2 text-gray-900 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none" min="0" required>
+            </div>
+
+            <div>
+                <button type="submit" class="w-full bg-yellow-500 hover:bg-yellow-600 text-white py-2 rounded-md text-sm font-medium">
+                    Mettre à jour la notation
+                </button>
+            </div>
+        </form>
+
+        <div class="mt-6 text-center">
+            <a href="{% url 'periode_detail' matiere.id periode.id %}" class="text-indigo-400 hover:underline">← Retour à la période</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

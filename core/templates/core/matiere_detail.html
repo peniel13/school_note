@@ -1,0 +1,537 @@
+{% extends "base.html" %}
+{% block title %}Détail Matière{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-4xl mx-auto bg-gray-800 rounded-lg shadow-lg p-8">
+        <h2 class="text-3xl font-semibold text-center text-white mb-6">
+            Matière : {{ matiere.nom }} (Classe : {{ classe.nom }})
+        </h2>
+
+        <!-- Professeur titulaire -->
+        <div class="mb-6 flex items-center gap-4">
+            {% if matiere.prof.profile_pic %}
+                <img src="{{ matiere.prof.profile_pic.url }}" alt="Prof" class="w-12 h-12 rounded-full object-cover">
+            {% else %}
+                <img src="https://bootdey.com/img/Content/avatar/avatar7.png" alt="Prof" class="w-12 h-12 rounded-full object-cover">
+            {% endif %}
+            <div>
+                <p class="text-white text-lg font-semibold">Professeur : {{ matiere.prof.get_full_name }}</p>
+                {% if matiere.prof.email %}
+                    <p class="text-gray-300 text-sm">{{ matiere.prof.email }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Onglets -->
+        <div class="mb-6 flex justify-center">
+            <button class="tab-button bg-indigo-600 text-white px-4 py-2 rounded-l-md" onclick="openTab(event, 'eleves')">Élèves</button>
+            {% if request.user == matiere.prof %}
+                <button class="tab-button bg-gray-700 text-white px-4 py-2" onclick="openTab(event, 'notation')">
+                    Ajouter Notation
+                </button>
+                <button class="tab-button bg-gray-700 text-white px-4 py-2 rounded-r-md" onclick="openTab(event, 'epreuve')">
+                    Ajouter Épreuve
+                </button>
+            {% endif %}
+        </div>
+
+        <!-- Onglet Élèves -->
+        <div id="eleves" class="tab-content">
+            <h3 class="text-xl font-semibold text-indigo-400 mb-4">Liste des élèves</h3>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-700">
+                    <thead>
+                        <tr class="bg-gray-800">
+                            <th class="px-4 py-2 text-left text-white">Nom</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-700">
+                        {% for eleve in eleves %}
+                            <tr>
+                                <td class="px-4 py-2 text-white">{{ eleve.nom }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td class="px-4 py-2 text-gray-400 text-center">Aucun élève pour le moment</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Liste des périodes -->
+            <div class="mt-12">
+                <h3 class="text-2xl font-semibold text-green-400 mb-6 text-center">Périodes disponibles</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {% if classe.school.type_ecole == "primaire" %}
+                        {% for p in periodes_primaire %}
+                        <a href="{% url 'periode_detail' matiere.id p.id %}" class="block bg-gray-700 rounded-lg shadow-lg overflow-hidden hover:bg-indigo-600 transition duration-200">
+                            <div class="p-6 text-center">
+                                <h3 class="text-xl text-indigo-500 mb-4">{{ p.nom }}</h3>
+                            </div>
+                        </a>
+                        {% empty %}
+                        <p class="text-gray-400 text-center">Aucune période trouvée.</p>
+                        {% endfor %}
+                    {% else %}
+                        {% for p in periodes_secondaire %}
+                        <a href="{% url 'periode_detail' matiere.id p.id %}" class="block bg-gray-700 rounded-lg shadow-lg overflow-hidden hover:bg-indigo-600 transition duration-200">
+                            <div class="p-6 text-center">
+                                <h3 class="text-xl text-indigo-500 mb-4">{{ p.nom }}</h3>
+                            </div>
+                        </a>
+                        {% empty %}
+                        <p class="text-gray-400 text-center">Aucune période trouvée.</p>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+            <!-- Épreuves disponibles par période -->
+<div class="mt-12">
+    <h3 class="text-2xl font-semibold text-green-400 mb-6 text-center">Épreuves disponibles par période</h3>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {% if classe.school.type_ecole == "primaire" %}
+            {% for p in periodes_primaire %}
+                <a href="{% url 'detail_epreuve' matiere.id p.id %}" class="block bg-gray-700 rounded-lg shadow-lg overflow-hidden hover:bg-yellow-600 transition duration-200">
+                    <div class="p-6 text-center">
+                        <h3 class="text-xl text-indigo-500 mb-4">{{ p.nom }}</h3>
+                    </div>
+                </a>
+            {% empty %}
+                <p class="text-gray-400 text-center">Aucune période trouvée.</p>
+            {% endfor %}
+        {% else %}
+            {% for p in periodes_secondaire %}
+                <a href="{% url 'detail_epreuve' matiere.id p.id %}" class="block bg-gray-700 rounded-lg shadow-lg overflow-hidden hover:bg-yellow-600 transition duration-200">
+                    <div class="p-6 text-center">
+                        <h3 class="text-xl text-indigo-500 mb-4">{{ p.nom }}</h3>
+                    </div>
+                </a>
+            {% empty %}
+                <p class="text-gray-400 text-center">Aucune période trouvée.</p>
+            {% endfor %}
+        {% endif %}
+    </div>
+</div>
+
+        </div>
+
+        <!-- Onglet Ajouter Notation (inchangé) -->
+        <div id="notation" class="tab-content hidden">
+            <h3 class="text-xl font-semibold text-indigo-400 mb-4">Ajouter une Notation</h3>
+
+            {% if messages %}
+                <div class="mb-4">
+                    {% for message in messages %}
+                        <div class="text-center {% if message.tags == 'error' %}text-red-500{% else %}text-green-500{% endif %}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <form method="POST" class="space-y-6">
+                {% csrf_token %}
+
+                <!-- Élève -->
+                <div>
+                    <label for="id_eleve" class="block text-sm font-medium text-white">Élève</label>
+                    <select id="id_eleve" name="eleve" class="w-full px-4 py-2 mt-2 text-gray-900 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none" required>
+                        <option value="" disabled selected>Choisir un élève</option>
+                        {% for eleve in eleves %}
+                            <option value="{{ eleve.id }}">{{ eleve.nom }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Période -->
+                {% if classe.school.type_ecole == "primaire" %}
+                <div>
+                    <label for="id_periode_primaire" class="block text-sm font-medium text-white">Période</label>
+                    <select id="id_periode_primaire" name="periode_primaire" class="w-full px-4 py-2 mt-2 text-gray-900 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none" required>
+                        <option value="">Sélectionner une période</option>
+                        {% for p in periodes_primaire %}
+                            <option value="{{ p.id }}">{{ p.nom }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% else %}
+                <div>
+                    <label for="id_periode_secondaire" class="block text-sm font-medium text-white">Période</label>
+                    <select id="id_periode_secondaire" name="periode_secondaire" class="w-full px-4 py-2 mt-2 text-gray-900 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none" required>
+                        <option value="">Sélectionner une période</option>
+                        {% for p in periodes_secondaire %}
+                            <option value="{{ p.id }}">{{ p.nom }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
+
+                <!-- Note Attendue -->
+                <div>
+                    <label for="note_attendue" class="block text-sm font-medium text-white">Note Attendue</label>
+                    <input type="number" name="note_attendue" id="note_attendue" class="w-full px-4 py-2 mt-2 text-gray-900 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none" min="0" required>
+                </div>
+
+                <!-- Note Obtenue -->
+                <div>
+                    <label for="note_obtenue" class="block text-sm font-medium text-white">Note Obtenue</label>
+                    <input type="number" name="note_obtenue" id="note_obtenue" class="w-full px-4 py-2 mt-2 text-gray-900 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none" min="0" required>
+                </div>
+
+                <div>
+                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-md text-sm font-medium">
+                        Ajouter la Notation
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Onglet Ajouter Épreuve -->
+        <div id="epreuve" class="tab-content hidden">
+            <h3 class="text-xl font-semibold text-yellow-400 mb-4">Ajouter une Épreuve</h3>
+            <form method="POST" class="space-y-6">
+                {% csrf_token %}
+                <input type="hidden" name="ajouter_epreuve" value="1">
+                {{ form_epreuve.as_p }}
+                <div>
+                    <button type="submit" class="w-full bg-yellow-600 hover:bg-yellow-700 text-white py-2 rounded-md text-sm font-medium">
+                        Ajouter l’Épreuve
+                    </button>
+                </div>
+            </form>
+
+            <!-- Liste des épreuves disponibles par période -->
+            
+    </div>
+</div>
+
+<script>
+function openTab(event, tabName) {
+    const contents = document.querySelectorAll('.tab-content');
+    contents.forEach(c => c.classList.add('hidden'));
+    document.getElementById(tabName).classList.remove('hidden');
+
+    const buttons = document.querySelectorAll('.tab-button');
+    buttons.forEach(b => {
+        b.classList.remove('bg-indigo-600', 'bg-yellow-600');
+        b.classList.add('bg-gray-700');
+    });
+    if (tabName === 'epreuve') {
+        event.currentTarget.classList.remove('bg-gray-700');
+        event.currentTarget.classList.add('bg-yellow-600');
+    } else {
+        event.currentTarget.classList.remove('bg-gray-700');
+        event.currentTarget.classList.add('bg-indigo-600');
+    }
+}
+
+// Par défaut : afficher Élèves
+document.addEventListener("DOMContentLoaded", () => openTab({currentTarget: document.querySelector('.tab-button')}, 'eleves'));
+</script>
+{% endblock %}
+
+
+
+{% comment %} {% extends "base.html" %}
+
+{% block title %}Détail Matière{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-4xl mx-auto bg-gray-800 rounded-lg shadow-lg p-8">
+        <h2 class="text-3xl font-semibold text-center text-white mb-6">
+            Matière : {{ matiere.nom }} (Classe : {{ classe.nom }})
+        </h2>
+        <!-- Professeur titulaire du cours -->
+<div class="mb-6 flex items-center gap-4">
+    {% if matiere.prof.profile_pic %}
+        <img src="{{ matiere.prof.profile_pic.url }}" alt="Prof" class="w-12 h-12 rounded-full object-cover">
+    {% else %}
+        <img src="https://bootdey.com/img/Content/avatar/avatar7.png" alt="Prof" class="w-12 h-12 rounded-full object-cover">
+    {% endif %}
+    <div>
+        <p class="text-white text-lg font-semibold">Professeur : {{ matiere.prof.get_full_name }}</p>
+        {% if matiere.prof.email %}
+            <p class="text-gray-300 text-sm">{{ matiere.prof.email }}</p>
+        {% endif %}
+    </div>
+</div>
+        <!-- Onglets -->
+        <div class="mb-6 flex justify-center">
+            <button class="tab-button bg-indigo-600 text-white px-4 py-2 rounded-l-md" onclick="openTab(event, 'eleves')">Élèves</button>
+            {% if request.user == matiere.prof %}
+<button class="tab-button bg-gray-700 text-white px-4 py-2 rounded-r-md"
+        onclick="openTab(event, 'notation')">
+    Ajouter Notation
+</button>
+{% endif %}
+
+           
+        </div>
+
+        <!-- Onglet Élèves -->
+        <div id="eleves" class="tab-content">
+            <h3 class="text-xl font-semibold text-indigo-400 mb-4">Liste des élèves</h3>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-700">
+                    <thead>
+                        <tr class="bg-gray-800">
+                            <th class="px-4 py-2 text-left text-white">Nom</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-700">
+                        {% for eleve in eleves %}
+                        <tr>
+                            <td class="px-4 py-2 text-white">{{ eleve.nom }}</td>
+                            
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td class="px-4 py-2 text-gray-400 text-center">Aucun élève pour le moment</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+             <!-- Liste des périodes -->
+             <div class="mt-12">
+                <h3 class="text-2xl font-semibold text-green-400 mb-6 text-center">Périodes disponibles</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {% if classe.school.type_ecole == "primaire" %}
+                        {% for p in periodes_primaire %}
+                        <a href="{% url 'periode_detail' matiere.id p.id %}" class="block bg-gray-700 rounded-lg shadow-lg overflow-hidden hover:bg-indigo-600 transition duration-200">
+                            <div class="p-6 text-center">
+                                <h3 class="text-xl text-indigo-500 mb-4">{{ p.nom }}</h3>
+                            </div>
+                        </a>
+                        {% empty %}
+                        <p class="text-gray-400 text-center">Aucune période trouvée.</p>
+                        {% endfor %}
+                    {% else %}
+                        {% for p in periodes_secondaire %}
+                        <a href="{% url 'periode_detail' matiere.id p.id %}" class="block bg-gray-700 rounded-lg shadow-lg overflow-hidden hover:bg-indigo-600 transition duration-200">
+                            <div class="p-6 text-center">
+                                <h3 class="text-xl text-indigo-500 mb-4">{{ p.nom }}</h3>
+                            </div>
+                        </a>
+                        {% empty %}
+                        <p class="text-gray-400 text-center">Aucune période trouvée.</p>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Onglet Ajouter Notation -->
+        <div id="notation" class="tab-content hidden">
+            <h3 class="text-xl font-semibold text-indigo-400 mb-4">Ajouter une Notation</h3>
+
+            {% if messages %}
+                <div class="mb-4">
+                    {% for message in messages %}
+                        <div class="text-center {% if message.tags == 'error' %}text-red-500{% else %}text-green-500{% endif %}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <form method="POST" class="space-y-6">
+                {% csrf_token %}
+
+                <!-- Élève -->
+                <div>
+                    <label for="id_eleve" class="block text-sm font-medium text-white">Élève</label>
+                    <select id="id_eleve" name="eleve" class="w-full px-4 py-2 mt-2 text-gray-900 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none" required>
+                        <option value="" disabled selected>Choisir un élève</option>
+                        {% for eleve in eleves %}
+                            <option value="{{ eleve.id }}">{{ eleve.nom }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Période -->
+                {% if classe.school.type_ecole == "primaire" %}
+                <div>
+                    <label for="id_periode_primaire" class="block text-sm font-medium text-white">Période</label>
+                    <select id="id_periode_primaire" name="periode_primaire" class="w-full px-4 py-2 mt-2 text-gray-900 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none" required>
+                        <option value="">Sélectionner une période</option>
+                        {% for p in periodes_primaire %}
+                            <option value="{{ p.id }}">{{ p.nom }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% else %}
+                <div>
+                    <label for="id_periode_secondaire" class="block text-sm font-medium text-white">Période</label>
+                    <select id="id_periode_secondaire" name="periode_secondaire" class="w-full px-4 py-2 mt-2 text-gray-900 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none" required>
+                        <option value="">Sélectionner une période</option>
+                        {% for p in periodes_secondaire %}
+                            <option value="{{ p.id }}">{{ p.nom }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
+
+                <!-- Note Attendue -->
+                <div>
+                    <label for="note_attendue" class="block text-sm font-medium text-white">Note Attendue</label>
+                    <input type="number" name="note_attendue" id="note_attendue" class="w-full px-4 py-2 mt-2 text-gray-900 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none" min="0" required>
+                </div>
+
+                <!-- Note Obtenue -->
+                <div>
+                    <label for="note_obtenue" class="block text-sm font-medium text-white">Note Obtenue</label>
+                    <input type="number" name="note_obtenue" id="note_obtenue" class="w-full px-4 py-2 mt-2 text-gray-900 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none" min="0" required>
+                </div>
+
+                <div>
+                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-md text-sm font-medium">
+                        Ajouter la Notation
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function openTab(event, tabName) {
+    const contents = document.querySelectorAll('.tab-content');
+    contents.forEach(c => c.classList.add('hidden'));
+    document.getElementById(tabName).classList.remove('hidden');
+
+    const buttons = document.querySelectorAll('.tab-button');
+    buttons.forEach(b => {
+        b.classList.remove('bg-indigo-600');
+        b.classList.add('bg-gray-700');
+    });
+    event.currentTarget.classList.remove('bg-gray-700');
+    event.currentTarget.classList.add('bg-indigo-600');
+}
+
+// Par défaut, afficher l'onglet Élèves
+document.addEventListener("DOMContentLoaded", () => openTab({currentTarget: document.querySelector('.tab-button')}, 'eleves'));
+</script>
+{% endblock %} {% endcomment %}
+
+
+{% comment %} {% extends "base.html" %}
+
+{% block title %}Détail Matière{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-4xl mx-auto bg-gray-800 rounded-lg shadow-lg p-8">
+        <h2 class="text-3xl font-semibold text-center text-white mb-6">
+            Matière : {{ matiere.nom }} (Classe : {{ classe.nom }})
+        </h2>
+
+        <!-- Tabs -->
+        <div class="mb-6">
+            <button class="tab-button bg-indigo-600 text-white px-4 py-2 rounded-l-md" onclick="openTab('eleves')">Élèves</button>
+            <button class="tab-button bg-gray-700 text-white px-4 py-2 rounded-r-md" onclick="openTab('notation')">Ajouter Notation</button>
+        </div>
+
+        <!-- Contenu Tabs -->
+        <div id="eleves" class="tab-content">
+            <h3 class="text-xl font-semibold text-indigo-400 mb-4">Liste des élèves</h3>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-700">
+                    <thead>
+                        <tr class="bg-gray-800">
+                            <th class="px-4 py-2 text-left text-white">Nom</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-700">
+                        {% for eleve in eleves %}
+                        <tr>
+                            <td class="px-4 py-2 text-white">{{ eleve.nom }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td class="px-4 py-2 text-gray-400 text-center">Aucun élève pour le moment</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="notation" class="tab-content hidden">
+            <h3 class="text-xl font-semibold text-indigo-400 mb-4">Ajouter une Notation</h3>
+            {% if messages %}
+                <div class="mb-4">
+                    {% for message in messages %}
+                        <div class="text-green-500 text-center">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <form method="POST" class="space-y-6">
+                {% csrf_token %}
+
+                <!-- Élève -->
+                <div>
+                    <label for="id_eleve" class="block text-sm font-medium text-white">Élève</label>
+                    <select id="id_eleve" name="eleve" class="w-full px-4 py-2 mt-2 text-gray-900 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                        <option value="" disabled selected>Choisir un élève</option>
+                        {% for eleve in eleves %}
+                            <option value="{{ eleve.id }}">{{ eleve.nom }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Période -->
+                <div>
+                    <label for="id_periode" class="block text-sm font-medium text-white">Période</label>
+                    <select id="id_periode" name="periode" class="w-full px-4 py-2 mt-2 text-gray-900 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                        <option value="">Sélectionner une période</option>
+                        {% for periode in periodes %}
+                            <option value="{{ periode.id }}">{{ periode.nom }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Note Attendue -->
+                <div>
+                    <label for="note_attendue" class="block text-sm font-medium text-white">Note Attendue</label>
+                    <input type="number" name="note_attendue" id="note_attendue" class="w-full px-4 py-2 mt-2 text-gray-900 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none" min="0" required>
+                </div>
+
+                <!-- Note Obtenue -->
+                <div>
+                    <label for="note_obtenue" class="block text-sm font-medium text-white">Note Obtenue</label>
+                    <input type="number" name="note_obtenue" id="note_obtenue" class="w-full px-4 py-2 mt-2 text-gray-900 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none" min="0" required>
+                </div>
+
+                <div>
+                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-md text-sm font-medium">
+                        Ajouter la Notation
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function openTab(tabName) {
+    const contents = document.querySelectorAll('.tab-content');
+    contents.forEach(c => c.classList.add('hidden'));
+    document.getElementById(tabName).classList.remove('hidden');
+
+    const buttons = document.querySelectorAll('.tab-button');
+    buttons.forEach(b => b.classList.remove('bg-indigo-600'));
+    buttons.forEach(b => b.classList.add('bg-gray-700'));
+    event.currentTarget.classList.remove('bg-gray-700');
+    event.currentTarget.classList.add('bg-indigo-600');
+}
+
+// Par défaut, afficher l'onglet Élèves
+openTab('eleves');
+</script>
+{% endblock %} {% endcomment %}

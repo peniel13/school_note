@@ -1,0 +1,509 @@
+{% extends "base.html" %}
+{% load custom_tags %}
+{% block title %}Profil Utilisateur{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-4xl mx-auto bg-gray-800 rounded-lg shadow-lg p-8">
+        <h2 class="text-3xl font-semibold text-center text-white mb-6">Profil utilisateur</h2>
+
+        <!-- Photo de profil -->
+        <div class="flex justify-center mb-6">
+            {% if user.profile_pic %}
+                <img src="{{ user.profile_pic.url }}" alt="Photo de Profil"
+                     class="w-32 h-32 object-cover rounded-full border-4 border-indigo-500 shadow-lg">
+            {% else %}
+                <img src="https://bootdey.com/img/Content/avatar/avatar7.png" alt="Admin"
+                     class="w-32 h-32 object-cover rounded-full border-4 border-indigo-500 shadow-lg">
+            {% endif %}
+        </div>
+
+        <!-- Section infos + bouton modifier -->
+        <div class="mt-8 flex flex-col md:flex-row md:items-center md:justify-between text-gray-300 md:space-x-6">
+            <div class="space-y-3 text-center md:text-left flex-1">
+                <p><strong>Nom :</strong> {{ user.first_name }} {{ user.last_name }}</p>
+                <p><strong>Email :</strong> {{ user.email }}</p>
+                <p><strong>Téléphone :</strong> {{ user.phone }}</p>
+                <p><strong>Rôle :</strong> {{ user.role }}</p>
+                <p><strong>Bio :</strong> {{ user.bio|default:"Pas de bio" }}</p>
+            </div>
+
+            <div class="mt-6 md:mt-0 text-center md:text-right">
+                <a href="{% url 'update_profile' %}" 
+                   class="inline-block bg-indigo-600 text-white py-2 px-6 rounded-md hover:bg-indigo-700 transition duration-300 shadow-md">
+                    ✏️ Modifier mon profil
+                </a>
+            </div>
+        </div>
+
+       <!-- Section Écoles supervisées -->
+       {% if ecoles_supervisees %}
+       <div class="mt-12">
+           <h3 class="text-2xl font-semibold text-indigo-400 mb-6 text-center">Écoles supervisées</h3>
+           <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+               {% for relation in ecoles_supervisees %}
+               
+               <div class="relative transform hover:-translate-y-2 hover:shadow-2xl transition duration-300">
+                <!-- Lien invisible couvrant toute la carte -->
+        <a href="{% url 'school_detail' relation.school.id %}" 
+        class="absolute inset-0 z-10"></a>
+                   <div class="bg-gray-700 rounded-xl shadow-md overflow-hidden relative">
+                       {% if relation.school.photo %}
+                           <img src="{{ relation.school.photo.url }}" alt="{{ relation.school.nom }}"
+                                class="w-full h-40 object-cover">
+                       {% else %}
+                           <img src="https://images.unsplash.com/photo-1571260899304-425eee4c7efc?auto=format&fit=crop&w=800&q=80"
+                                alt="School" class="w-full h-40 object-cover">
+                       {% endif %}
+       
+                       <!-- Boutons action -->
+                       <div class="absolute top-2 left-2 flex flex-col gap-1">
+                           <!-- PDF -->
+                           
+                           <!-- Infos École -->
+                           <a href="{% url 'info_school_detail' relation.school.id %}" 
+                              class="bg-green-500 hover:bg-green-600 text-white text-xs font-semibold px-3 py-1 rounded shadow">
+                               Infos École
+                           </a>
+                           <!-- Fondateur -->
+                           <a href="{% url 'fondateur_school' relation.school.id %}" 
+                              class="bg-yellow-500 hover:bg-yellow-600 text-white text-xs font-semibold px-3 py-1 rounded shadow">
+                               Fondateur
+                           </a>
+                       </div>
+       
+                       <div class="p-4 text-center">
+                           <h4 class="text-lg font-semibold text-white mb-1">{{ relation.school.nom }}</h4>
+                           <p class="text-gray-400 text-sm mb-2">{{ relation.school.type_ecole|capfirst }}</p>
+                           <p class="text-indigo-400 font-medium">{{ relation.school.annee_scolaire }}</p>
+                       </div>
+                   </div>
+               </div>
+               {% endfor %}
+           </div>
+       </div>
+       {% else %}
+       <p class="mt-10 text-gray-400 text-center">Aucune école à superviser pour le moment.</p>
+       {% endif %}
+       
+       {% comment %} {% if ecoles_supervisees %}
+       <div class="mt-12">
+           <h3 class="text-2xl font-semibold text-indigo-400 mb-6 text-center">Écoles supervisées</h3>
+           <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+               {% for relation in ecoles_supervisees %}
+                   <div class="relative transform hover:-translate-y-2 hover:shadow-2xl transition duration-300">
+                       <div class="bg-gray-700 rounded-xl shadow-md overflow-hidden relative">
+                           {% if relation.school.photo %}
+                               <img src="{{ relation.school.photo.url }}" alt="{{ relation.school.nom }}"
+                                    class="w-full h-40 object-cover">
+                           {% else %}
+                               <img src="https://images.unsplash.com/photo-1571260899304-425eee4c7efc?auto=format&fit=crop&w=800&q=80"
+                                    alt="School" class="w-full h-40 object-cover">
+                           {% endif %}
+       
+                           <!-- Boutons action -->
+                           <div class="absolute top-2 left-2 flex flex-col gap-1">
+                               <!-- PDF -->
+                               <a href="{% url 'souvenir_school_pdf' relation.school.id %}" 
+                                  class="bg-indigo-500 hover:bg-indigo-600 text-white text-xs font-semibold px-3 py-1 rounded shadow">
+                                   Télécharger PDF
+                               </a>
+                               <!-- Infos École -->
+                               <a href="{% url 'info_school_detail' relation.school.id %}" 
+                                  class="bg-green-500 hover:bg-green-600 text-white text-xs font-semibold px-3 py-1 rounded shadow">
+                                   Infos École
+                               </a>
+                           </div>
+       
+                           <div class="p-4 text-center">
+                               <h4 class="text-lg font-semibold text-white mb-1">{{ relation.school.nom }}</h4>
+                               <p class="text-gray-400 text-sm mb-2">{{ relation.school.type_ecole|capfirst }}</p>
+                               <p class="text-indigo-400 font-medium">{{ relation.school.annee_scolaire }}</p>
+                           </div>
+                       </div>
+                   </div>
+               {% endfor %}
+           </div>
+       </div>
+       {% else %}
+       <p class="mt-10 text-gray-400 text-center">Aucune école à superviser pour le moment.</p>
+       {% endif %} {% endcomment %}
+       
+{% comment %} {% if ecoles_supervisees %}
+<div class="mt-12">
+    <h3 class="text-2xl font-semibold text-indigo-400 mb-6 text-center">Écoles supervisées</h3>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        {% for relation in ecoles_supervisees %}
+            <div class="relative transform hover:-translate-y-2 hover:shadow-2xl transition duration-300">
+                <a href="{% url 'school_detail' relation.school.id %}">
+                    <div class="bg-gray-700 rounded-xl shadow-md overflow-hidden relative">
+                        {% if relation.school.photo %}
+                            <img src="{{ relation.school.photo.url }}" alt="{{ relation.school.nom }}"
+                                 class="w-full h-40 object-cover">
+                        {% else %}
+                            <img src="https://images.unsplash.com/photo-1571260899304-425eee4c7efc?auto=format&fit=crop&w=800&q=80"
+                                 alt="School" class="w-full h-40 object-cover">
+                        {% endif %}
+
+                        <!-- Bouton de téléchargement PDF -->
+                        <a href="{% url 'souvenir_school_pdf' relation.school.id %}" 
+                           class="absolute top-2 left-2 bg-indigo-500 hover:bg-indigo-600 text-white text-xs font-semibold px-3 py-1 rounded shadow">
+                            Télécharger PDF
+                        </a>
+
+                        <div class="p-4 text-center">
+                            <h4 class="text-lg font-semibold text-white mb-1">{{ relation.school.nom }}</h4>
+                            <p class="text-gray-400 text-sm mb-2">{{ relation.school.type_ecole|capfirst }}</p>
+                            <p class="text-indigo-400 font-medium">{{ relation.school.annee_scolaire }}</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% else %}
+<p class="mt-10 text-gray-400 text-center">Aucune école à superviser pour le moment.</p>
+{% endif %} {% endcomment %}
+
+
+        <!-- Section Matières à gérer -->
+        {% if matieres_prof %}
+        <div class="mt-12">
+            <h3 class="text-2xl font-semibold text-green-400 mb-6 text-center">Matières à gérer</h3>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-700">
+                    <thead>
+                        <tr class="bg-gray-800">
+                            <th class="px-4 py-2 text-left text-sm font-medium text-white">Nom</th>
+                            <th class="px-4 py-2 text-left text-sm font-medium text-white">Classe</th>
+                            <th class="px-4 py-2 text-left text-sm font-medium text-white">École</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-700">
+                        {% for matiere in matieres_prof %}
+                        <tr class="hover:bg-gray-700 transition duration-200 cursor-pointer">
+                            <td class="px-4 py-2 text-green-400">
+                                <a href="{% url 'matiere_detail' matiere.id %}" class="hover:underline">
+                                    {{ matiere.nom }}
+                                </a>
+                            </td>
+                            <td class="px-4 py-2 text-white">{{ matiere.classe.nom }}</td>
+                            <td class="px-4 py-2 text-white">{{ matiere.school.nom }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="px-4 py-2 text-gray-400 text-center">Aucune matière attribuée</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Section Classes dont l'utilisateur est titulaire -->
+        {% if classes_titulaire %}
+        <div class="mt-12">
+            <h3 class="text-2xl font-semibold text-indigo-400 mb-6 text-center">Classes dont je suis titulaire</h3>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-700">
+                    <thead>
+                        <tr class="bg-gray-800">
+                            <th class="px-4 py-2 text-left text-sm font-medium text-white">Nom de la classe</th>
+                            <th class="px-4 py-2 text-left text-sm font-medium text-white">École</th>
+                            <th class="px-4 py-2 text-left text-sm font-medium text-white">Année scolaire</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-700">
+                        {% for classe in classes_titulaire %}
+                        <tr class="hover:bg-gray-700 cursor-pointer"
+                            onclick="window.location.href='{% url 'classe_detail' classe.id %}'">
+                            <td class="px-4 py-2 text-indigo-400">{{ classe.nom }}</td>
+                            <td class="px-4 py-2 text-white">{{ classe.school.nom }}</td>
+                            <td class="px-4 py-2 text-white">{{ classe.school.annee_scolaire }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="px-4 py-2 text-gray-400 text-center">Aucune classe en tant que titulaire</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- 🧠 Section Élèves liés -->
+        <div class="mt-12">
+            <h3 class="text-2xl font-semibold text-yellow-400 mb-6 text-center">Élèves associés à mon compte</h3>
+
+            {% if eleves_data %}
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {% for item in eleves_data %}
+                    {% if item.eleve.is_active %}
+                    <a href="{% url 'details_eleve' item.eleve.id %}" 
+                       class="block bg-gray-700 rounded-lg shadow-lg overflow-hidden hover:bg-indigo-600 transition duration-200">
+                        <div class="p-6 text-center">
+                            <h3 class="text-xl text-indigo-400 font-semibold mb-2">{{ item.eleve.nom }}</h3>
+                            <p class="text-gray-300 mb-1">Classe : {{ item.eleve.classe.nom }}</p>
+                            <p class="text-gray-300 mb-3">École : {{ item.eleve.school.nom }}</p>
+
+                            <p class="text-gray-300">Total Attendu : {{ item.total_attendu }}</p>
+
+                            {% if item.total_obtenu < item.total_attendu|floatdivide:2 %}
+                                <p class="text-red-500 font-bold">Total Obtenu : {{ item.total_obtenu }}</p>
+                            {% else %}
+                                <p class="text-gray-300">Total Obtenu : {{ item.total_obtenu }}</p>
+                            {% endif %}
+
+                            {% if item.pourcentage_total < 50 %}
+                                <p class="text-red-500 font-semibold text-lg">Pourcentage : {{ item.pourcentage_total|floatformat:2 }}%</p>
+                            {% else %}
+                                <p class="text-green-400 font-semibold text-lg">Pourcentage : {{ item.pourcentage_total|floatformat:2 }}%</p>
+                            {% endif %}
+                        </div>
+                    </a>
+                    {% else %}
+                    <div class="bg-red-800 rounded-lg p-6 text-center shadow-lg">
+                        <h3 class="text-xl text-white font-semibold mb-2">{{ item.eleve.nom }}</h3>
+                        <p class="text-gray-300 mb-2">Classe : {{ item.eleve.classe.nom }}</p>
+                        <p class="text-gray-400 mb-4">École : {{ item.eleve.school.nom }}</p>
+                        <p class="text-red-400 font-bold">Vous n'êtes pas en règle avec les paiements ou attendez une officialisation.</p>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-center text-gray-400">Aucun élève lié à votre compte.</p>
+            {% endif %}
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+
+{% comment %} {% extends "base.html" %}
+
+{% block title %}Profil Utilisateur{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-4xl mx-auto bg-gray-800 rounded-lg shadow-lg p-8">
+        <h2 class="text-3xl font-semibold text-center text-white mb-6">Profil utilisateur</h2>
+
+        <!-- Photo de profil -->
+        <div class="flex justify-center mb-6">
+            {% if user.profile_pic %}
+                <img src="{{ user.profile_pic.url }}" alt="Photo de Profil"
+                     class="w-32 h-32 object-cover rounded-full border-4 border-indigo-500 shadow-lg">
+            {% else %}
+                <img src="https://bootdey.com/img/Content/avatar/avatar7.png" alt="Admin"
+                     class="w-32 h-32 object-cover rounded-full border-4 border-indigo-500 shadow-lg">
+            {% endif %}
+        </div>
+
+        <!-- Section infos + bouton modifier -->
+        <div class="mt-8 flex flex-col md:flex-row md:items-center md:justify-between text-gray-300 md:space-x-6">
+            <!-- Infos principales -->
+            <div class="space-y-3 text-center md:text-left flex-1">
+                <p><strong>Nom :</strong> {{ user.first_name }} {{ user.last_name }}</p>
+                <p><strong>Email :</strong> {{ user.email }}</p>
+                <p><strong>Téléphone :</strong> {{ user.phone }}</p>
+                <p><strong>Rôle :</strong> {{ user.role }}</p>
+                <p><strong>Bio :</strong> {{ user.bio|default:"Pas de bio" }}</p>
+            </div>
+
+            <!-- Bouton modifier profil -->
+            <div class="mt-6 md:mt-0 text-center md:text-right">
+                <a href="{% url 'update_profile' %}" 
+                   class="inline-block bg-indigo-600 text-white py-2 px-6 rounded-md hover:bg-indigo-700 transition duration-300 shadow-md">
+                    ✏️ Modifier mon profil
+                </a>
+            </div>
+        </div>
+
+        <!-- Section Écoles supervisées -->
+        {% if ecoles_supervisees %}
+        <div class="mt-12">
+            <h3 class="text-2xl font-semibold text-indigo-400 mb-6 text-center">Écoles supervisées</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                {% for relation in ecoles_supervisees %}
+                    <a href="{% url 'school_detail' relation.school.id %}" class="block transform hover:-translate-y-2 hover:shadow-2xl transition duration-300">
+                        <div class="bg-gray-700 rounded-xl shadow-md overflow-hidden">
+                            {% if relation.school.photo %}
+                                <img src="{{ relation.school.photo.url }}" alt="{{ relation.school.nom }}"
+                                     class="w-full h-40 object-cover">
+                            {% else %}
+                                <img src="https://images.unsplash.com/photo-1571260899304-425eee4c7efc?auto=format&fit=crop&w=800&q=80"
+                                     alt="School"
+                                     class="w-full h-40 object-cover">
+                            {% endif %}
+                            <div class="p-4 text-center">
+                                <h4 class="text-lg font-semibold text-white mb-1">{{ relation.school.nom }}</h4>
+                                <p class="text-gray-400 text-sm mb-2">{{ relation.school.type_ecole|capfirst }}</p>
+                                <p class="text-indigo-400 font-medium">{{ relation.school.annee_scolaire }}</p>
+                            </div>
+                        </div>
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% else %}
+        <p class="mt-10 text-gray-400 text-center">Aucune école à superviser pour le moment.</p>
+        {% endif %}
+
+        <!-- Section Matières à gérer -->
+{% if matieres_prof %}
+<div class="mt-12">
+    <h3 class="text-2xl font-semibold text-green-400 mb-6 text-center">Matières à gérer</h3>
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-700">
+            <thead>
+                <tr class="bg-gray-800">
+                    <th class="px-4 py-2 text-left text-sm font-medium text-white">Nom</th>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-white">Classe</th>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-white">École</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-700">
+                {% for matiere in matieres_prof %}
+                <tr class="hover:bg-gray-700 transition duration-200 cursor-pointer">
+                    <td class="px-4 py-2 text-green-400">
+                        <a href="{% url 'matiere_detail' matiere.id %}" class="hover:underline">
+                            {{ matiere.nom }}
+                        </a>
+                    </td>
+                    <td class="px-4 py-2 text-white">{{ matiere.classe.nom }}</td>
+                    <td class="px-4 py-2 text-white">{{ matiere.school.nom }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3" class="px-4 py-2 text-gray-400 text-center">Aucune matière attribuée</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+
+        <!-- Section Classes dont l'utilisateur est titulaire -->
+{% if classes_titulaire %}
+<div class="mt-12">
+    <h3 class="text-2xl font-semibold text-indigo-400 mb-6 text-center">Classes dont je suis titulaire</h3>
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-700">
+            <thead>
+                <tr class="bg-gray-800">
+                    <th class="px-4 py-2 text-left text-sm font-medium text-white">Nom de la classe</th>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-white">École</th>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-white">Année scolaire</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-700">
+                {% for classe in classes_titulaire %}
+                <tr class="hover:bg-gray-700 cursor-pointer"
+                    onclick="window.location.href='{% url 'classe_detail' classe.id %}'">
+                    <td class="px-4 py-2 text-indigo-400">{{ classe.nom }}</td>
+                    <td class="px-4 py-2 text-white">{{ classe.school.nom }}</td>
+                    <td class="px-4 py-2 text-white">{{ classe.school.annee_scolaire }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3" class="px-4 py-2 text-gray-400 text-center">Aucune classe en tant que titulaire</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+
+    </div>
+</div>
+{% endblock %} {% endcomment %}
+
+
+{% comment %} {% extends "base.html" %}
+
+{% block title %}Profil Utilisateur{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-4xl mx-auto bg-gray-800 rounded-lg shadow-lg p-8">
+        <h2 class="text-3xl font-semibold text-center text-white mb-6">Profil utilisateur</h2>
+
+        <!-- Photo de profil -->
+        <div class="flex justify-center mb-6">
+            {% if user.profile_pic %}
+                <img src="{{ user.profile_pic.url }}" alt="Photo de Profil"
+                     class="w-32 h-32 object-cover rounded-full border-4 border-indigo-500 shadow-lg">
+            {% else %}
+                <img src="https://bootdey.com/img/Content/avatar/avatar7.png" alt="Admin"
+                     class="w-32 h-32 object-cover rounded-full border-4 border-indigo-500 shadow-lg">
+            {% endif %}
+        </div>
+
+       <!-- Section infos + bouton modifier -->
+<div class="mt-8 flex flex-col md:flex-row md:items-center md:justify-between text-gray-300 md:space-x-6">
+
+    <!-- Infos principales -->
+    <div class="space-y-3 text-center md:text-left flex-1">
+        <p><strong>Nom :</strong> {{ user.first_name }} {{ user.last_name }}</p>
+        <p><strong>Email :</strong> {{ user.email }}</p>
+        <p><strong>Téléphone :</strong> {{ user.phone }}</p>
+        <p><strong>Rôle :</strong> {{ user.role }}</p>
+        <p><strong>Bio :</strong> {{ user.bio|default:"Pas de bio" }}</p>
+    </div>
+
+    <!-- Bouton modifier profil -->
+    <div class="mt-6 md:mt-0 text-center md:text-right">
+        <a href="{% url 'update_profile' %}" 
+           class="inline-block bg-indigo-600 text-white py-2 px-6 rounded-md hover:bg-indigo-700 transition duration-300 shadow-md">
+            ✏️ Modifier mon profil
+        </a>
+    </div>
+
+</div>
+
+
+        <!-- Section Écoles supervisées -->
+        <!-- Section Écoles supervisées -->
+{% if ecoles_supervisees %}
+<div class="mt-12">
+    <h3 class="text-2xl font-semibold text-indigo-400 mb-6 text-center">Écoles supervisées</h3>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        {% for relation in ecoles_supervisees %}
+            <a href="{% url 'school_detail' relation.school.id %}" class="block transform hover:-translate-y-2 hover:shadow-2xl transition duration-300">
+                <div class="bg-gray-700 rounded-xl shadow-md overflow-hidden">
+                    {% if relation.school.photo %}
+                        <img src="{{ relation.school.photo.url }}" alt="{{ relation.school.nom }}"
+                             class="w-full h-40 object-cover">
+                    {% else %}
+                        <img src="https://images.unsplash.com/photo-1571260899304-425eee4c7efc?auto=format&fit=crop&w=800&q=80"
+                             alt="School"
+                             class="w-full h-40 object-cover">
+                    {% endif %}
+
+                    <div class="p-4 text-center">
+                        <h4 class="text-lg font-semibold text-white mb-1">{{ relation.school.nom }}</h4>
+                        <p class="text-gray-400 text-sm mb-2">{{ relation.school.type_ecole|capfirst }}</p>
+                        <p class="text-indigo-400 font-medium">{{ relation.school.annee_scolaire }}</p>
+                    </div>
+                </div>
+            </a>
+        {% endfor %}
+    </div>
+</div>
+{% else %}
+<p class="mt-10 text-gray-400 text-center">Aucune école à superviser pour le moment.</p>
+{% endif %}
+
+    </div>
+</div>
+{% endblock %} {% endcomment %}

@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% block title %}Détail Épreuve{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-4xl mx-auto bg-gray-800 rounded-lg shadow-lg p-8">
+
+        <!-- En-tête Matière -->
+        <h2 class="text-3xl font-semibold text-center text-white mb-6">
+            Matière : {{ matiere.nom }} (Classe : {{ classe.nom }})
+        </h2>
+
+        <!-- Professeur -->
+        <div class="mb-6 flex items-center gap-4">
+            {% if prof.profile_pic %}
+                <img src="{{ prof.profile_pic.url }}" alt="Prof" class="w-12 h-12 rounded-full object-cover">
+            {% else %}
+                <img src="https://bootdey.com/img/Content/avatar/avatar7.png" alt="Prof" class="w-12 h-12 rounded-full object-cover">
+            {% endif %}
+            <div>
+                <p class="text-white text-lg font-semibold">Professeur : {{ prof.get_full_name }}</p>
+                {% if prof.email %}
+                    <p class="text-gray-300 text-sm">{{ prof.email }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Note attendue de la matière -->
+        <p class="text-white font-semibold">
+            Note attendue pour cette période : {{ note_attendue_moyenne|default:"-" }}
+        </p>
+
+        <!-- Formulaire d'ajout / modification d'épreuve -->
+        {% if request.user == prof %}
+        <div class="mt-8 bg-gray-700 p-6 rounded-lg shadow-lg">
+            <h3 class="text-xl font-semibold text-yellow-400 mb-4">Ajouter / Modifier Épreuve</h3>
+
+            {% if messages %}
+                <div class="mb-4">
+                    {% for message in messages %}
+                        <div class="text-center {% if message.tags == 'error' %}text-red-500{% else %}text-green-500{% endif %}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <form method="POST" class="space-y-4">
+                {% csrf_token %}
+                <input type="hidden" name="ajouter_epreuve" value="1">
+                {{ form_epreuve.as_p }}
+                <button type="submit" class="w-full bg-yellow-600 hover:bg-yellow-700 text-white py-2 rounded-md">
+                    Ajouter l’Épreuve
+                </button>
+            </form>
+        </div>
+        {% endif %}
+
+        <!-- Liste des épreuves et notes par élève -->
+        <div class="mt-8">
+            <h3 class="text-2xl font-semibold text-green-400 mb-6 text-center">
+                Épreuves pour la période : {{ periode.nom }}
+            </h3>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                {% for e in epreuves %}
+                <div class="bg-gray-800 p-4 rounded-lg shadow-lg text-white relative">
+                    <h4 class="text-lg font-semibold mb-2">
+                        {{ e.nom }} du 
+                        <span class="text-gray-300 text-sm">({{ e.date|date:"d/m/Y" }})</span>
+                    </h4>
+                    <p>Note attendue : {{ e.note_attendue }}</p>
+
+                    <!-- Notes des élèves -->
+                    {% comment %} <div class="mt-2 bg-gray-700 p-2 rounded">
+                        <h5 class="font-semibold text-indigo-400 mb-2">Notes des élèves :</h5>
+                        {% if e.notes.all %}
+                            <ul class="list-disc list-inside text-gray-200">
+                                {% for note in e.notes.all %}
+                                    <li>{{ note.eleve.nom }} : {{ note.note|default:"Non rempli" }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p class="text-gray-400 text-sm">Aucune note enregistrée.</p>
+                        {% endif %}
+                    </div> {% endcomment %}
+
+                    {% if request.user == prof %}
+                    <div class="mt-2 flex gap-2">
+                        <!-- Modifier -->
+                        <button onclick="editEpreuve({{ e.id }}, '{{ e.nom }}', {{ e.note_attendue }})"
+                                class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-sm">
+                            Modifier
+                        </button>
+
+                        <!-- Supprimer -->
+                        <button onclick="confirmDeleteEpreuve({{ e.id }}, '{{ e.nom }}')"
+                                class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-sm">
+                            Supprimer
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+                {% empty %}
+                <p class="text-gray-400 text-center col-span-full">Aucune épreuve disponible pour cette période.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Bouton Retour -->
+        <div class="mt-8 text-center">
+            <a href="{% url 'matiere_detail' matiere.id %}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-md">
+                Retour à la matière
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- JS SweetAlert et gestion formulaire -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+function confirmDeleteEpreuve(epreuveId, epreuveNom) {
+    Swal.fire({
+        title: 'Êtes-vous sûr ?',
+        text: `L'épreuve "${epreuveNom}" sera supprimée !`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc2626',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Oui, supprimer',
+        cancelButtonText: 'Annuler'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '';
+            form.innerHTML = `
+                {% csrf_token %}
+                <input type="hidden" name="epreuve_id" value="${epreuveId}">
+                <input type="hidden" name="delete_epreuve" value="1">
+            `;
+            document.body.appendChild(form);
+            form.submit();
+        }
+    });
+}
+
+// Modifier épreuve : remplit le formulaire
+function editEpreuve(id, nom, note_attendue) {
+    const form = document.querySelector('form');
+    form.querySelector('input[name="ajouter_epreuve"]').value = '';
+    form.innerHTML += `<input type="hidden" name="edit_epreuve" value="1">
+                       <input type="hidden" name="epreuve_id" value="${id}">`;
+    form.querySelector('#id_nom').value = nom;
+    form.querySelector('#id_note_attendue').value = note_attendue;
+}
+</script>
+{% endblock %}

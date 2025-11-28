@@ -1,0 +1,2169 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Souvenir Scolaire — {{ school.nom }}</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    font-family: 'Inter', sans-serif;
+    color: #1a1a1a;
+  }
+
+  /* Pour PDF : taille A4 et marges zéro */
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
+  /* =========================
+     PAGE 1 : Couverture
+     ========================= */
+  .cover {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+    page-break-after: always; /* Passe à la page suivante pour PDF */
+  }
+
+  /* Logos coins */
+  .top-left, .top-right {
+    position: absolute;
+    top: 20px;
+  }
+  .top-left { left: 20px; }
+  .top-right { right: 20px; }
+
+  .top-left img, .top-right img {
+    width: 70px;
+    height: 70px;
+    object-fit: cover;
+    border-radius: 12px;
+    border: 2px solid white;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  }
+
+  /* Contenu central */
+  .center-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    flex-grow: 1;
+    text-align: center;
+    padding: 0 20px;
+    text-shadow: 0 3px 12px rgba(0,0,0,0.6);
+  }
+
+  .center-content h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 42px;
+    font-weight: 700;
+    margin: 0;
+  }
+  .center-content .year {
+    font-size: 26px;
+    font-weight: 600;
+    margin-top: 8px;
+  }
+  .center-content .slogan {
+    font-family: 'Playfair Display', serif;
+    font-size: 36px;
+    font-weight: 800;
+    margin-top: 16px;
+    line-height: 1.3;
+  }
+
+  /* Texte bas page couverture */
+  .bottom {
+    text-align: center;
+    padding: 24px 16px;
+    font-size: 16px;
+    line-height: 1.4;
+  }
+  .bottom .main-text {
+    margin-bottom: 12px;
+    font-style: italic;
+  }
+  .bottom .note {
+    font-weight: 600;
+  }
+
+  /* =========================
+     PAGE 2 : Présentation école
+     ========================= */
+  .presentation-page {
+    width: 100%;
+    padding: 40px 30px;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+    background: #fdfdfd;
+    color: #1a1a1a;
+    page-break-before: always; /* Nouvelle page PDF */
+  }
+
+  .presentation-page .section-head {
+    display: flex;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+
+  .presentation-page .section-head .marker {
+    width: 6px;
+    height: 40px;
+    background-color: #1a365d;
+    margin-right: 12px;
+    border-radius: 3px;
+  }
+
+  .presentation-page .section-head h2 {
+    font-size: 28px;
+    color: #1a365d;
+    margin: 0;
+  }
+
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 30px;
+  }
+
+  .col {
+    flex: 1;
+    min-width: 300px;
+  }
+
+  .col-left .presentation-image {
+    width: 100%;
+    height: 220px;
+    border-radius: 10px;
+    background-size: cover;
+    background-position: center;
+    margin-bottom: 16px;
+  }
+
+  .col-left h3 {
+    font-size: 22px;
+    color: #1a365d;
+    margin-top: 16px;
+    margin-bottom: 12px;
+  }
+
+  .col-left p {
+    font-size: 16px;
+    line-height: 1.6;
+    margin-bottom: 12px;
+  }
+
+  .col-right h4 {
+    font-size: 20px;
+    color: #1a365d;
+    margin-top: 16px;
+    margin-bottom: 6px;
+  }
+
+  .col-right p {
+    font-size: 16px;
+    line-height: 1.6;
+    margin-bottom: 12px;
+  }
+
+  .gallery {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 14px;
+  }
+
+  .gallery .img {
+    width: calc(33% - 6.66px);
+    height: 100px;
+    border-radius: 8px;
+    background-size: cover;
+    background-position: center;
+  }
+
+
+  
+</style>
+</head>
+<body>
+
+{% comment %} <!-- =========================
+     PAGE 1 : Couverture
+     ========================= -->
+<div class="cover"
+     {% if info and info.image_principale %}
+        style="background-image: url('{{ info.image_principale.url }}');"
+     {% else %}
+        style="background-image: url('{{ default_photo }}');"
+     {% endif %}
+>
+    <div class="top-left">
+      {% if info and info.logo %}
+        <img src="{{ info.logo.url }}" alt="Logo école">
+      {% else %}
+        <img src="{{ default_logo }}" alt="Logo école">
+      {% endif %}
+    </div>
+    <div class="top-right">
+      <img src="{{ country_flag_url }}" alt="Drapeau">
+    </div>
+
+    <div class="center-content">
+      <h1>{{ school.nom }}</h1>
+      <div class="year">
+        {% if info %}Année scolaire {{ info.annee_scolaire }}{% else %}Année scolaire {{ school.annee_scolaire }}{% endif %}
+      </div>
+      {% if info and info.slogan %}
+        <div class="slogan">{{ info.slogan }}</div>
+      {% endif %}
+    </div>
+
+    <div class="bottom">
+      <div class="main-text">
+        Souvenir officiel de l'établissement — Une rétrospective illustrée des temps forts, des professeurs et des élèves de l'année scolaire.
+      </div>
+      <div class="note">
+        Production School Note
+      </div>
+    </div>
+</div> {% endcomment %}
+<!-- =========================
+     PAGE 1 : COUVERTURE
+     ========================= -->
+     <!-- =========================
+     PAGE 1 : COUVERTURE
+     ========================= -->
+     <!-- =========================
+     PAGE 1 : COUVERTURE
+     ========================= -->
+     {% load static %}
+     <section class="page cover-page" aria-label="Couverture">
+         
+         <div class="corner-logo">
+             {% if info and info.logo %}
+                 <img src="{{ info.logo.url }}" alt="Logo école">
+             {% else %}
+                 <img src="{{ default_logo }}" alt="Logo école">
+             {% endif %}
+         </div>
+         
+         <div class="corner-flag">
+             <img src="{{ country_flag_url }}" alt="Drapeau">
+         </div>
+         
+         <h1 class="magazine-title">
+             SOUVENIR SCOLAIRE
+         </h1>
+         
+         <div class="cover-hero"
+             {% if info and info.image_principale %}
+                 style="background-image:url('{{ info.image_principale.url }}');"
+             {% else %}
+                 style="background-image:url('{{ default_photo }}');"
+             {% endif %}
+         >
+             <div class="hero-overlay"></div>
+         </div>
+         
+         <div class="cover-left">
+             <div class="logo-row">
+                 
+                 <div class="school-main-info">
+                     <div class="school-title">{{ school.nom }}</div>
+                     
+                     <div class="school-year">
+                         Année Scolaire 
+                         <span class="year-highlight">
+                             {% if info %}
+                                 {{ info.annee_scolaire }}
+                             {% else %}
+                                 {{ school.annee_scolaire }}
+                             {% endif %}
+                         </span>
+                     </div>
+                 </div>
+                 
+                 <div class="badge-row">
+                     <div class="badge badge-rdc">RDC</div>
+                     <div class="badge badge-promo">
+                         Promotion : {{ classe.nom|default:"N/A" }}
+                     </div>
+                 </div>
+             </div>
+             
+             <div class="intro-text">
+                 <p class="muted-note">
+                     Souvenir officiel de l'établissement — Une rétrospective illustrée des temps forts,
+                     des professeurs et des élèves ayant marqué l'année scolaire.
+                 </p>
+             </div>
+             
+             {% if info and info.slogan %}
+             <div class="school-slogan">
+                 <span class="slogan-quote">«</span> {{ info.slogan }} <span class="slogan-quote">»</span>
+             </div>
+             {% endif %}
+         </div>
+         
+         <div class="cover-footer">
+             <span class="production-text">Production de School Note</span>
+             <span class="website-link">schoolnote.com</span>
+         </div>
+         
+     </section>
+     
+     <style>
+     /* 🔑 AJOUT CRITIQUE POUR LE PDF : Déclaration des polices locales */
+     @font-face {
+         font-family: 'Playfair Display';
+         src: url('file://{{ base_dir }}/static/fonts/PlayfairDisplay-Bold.ttf') format('truetype');
+         font-weight: 700;
+     }
+     @font-face {
+         font-family: 'Lato';
+         src: url('file://{{ base_dir }}/static/fonts/Lato-Regular.ttf') format('truetype');
+         font-weight: 400;
+     }
+     @font-face {
+         font-family: 'Lato';
+         src: url('file://{{ base_dir }}/static/fonts/Lato-Bold.ttf') format('truetype');
+         font-weight: 700;
+     }
+     
+     /* Base de la page */
+     .cover-page {
+         display: block; 
+         width: 100%;
+         height: 100%;
+         position: relative;
+         page-break-after: always;
+         font-family: 'Lato', sans-serif;
+         background-color: #f7f7f7;
+     }
+     
+     /* --- TITRE ÉDITORIAL CENTRAL --- */
+     .magazine-title {
+         position: absolute;
+         top: 50px; 
+         left: 50%;
+         transform: translateX(-50%);
+         z-index: 10;
+         font-family: 'Playfair Display', serif;
+         font-size: 40px; 
+         font-weight: 700;
+         color: #fff; 
+         letter-spacing: 5px;
+         text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+         text-align: center;
+         width: 80%;
+     }
+     
+     /* Coins (Logo/Drapeau) */
+     .corner-logo, .corner-flag {
+         position: absolute;
+         top: 20px;
+         z-index: 20; 
+     }
+     .corner-logo { left: 20px; }
+     .corner-flag { right: 20px; }
+     
+     .corner-logo img, .corner-flag img {
+         width: 60px; 
+         height: 60px;
+         border-radius: 50%; 
+         object-fit: cover;
+         border: 3px solid #fff;
+         box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+     }
+     
+     /* Colonne droite / Image de fond (Cover Hero) */
+     .cover-hero {
+         width: 100%;
+         height: 100%;
+         position: absolute; 
+         background-size: cover;
+         background-position: center;
+         filter: grayscale(10%) brightness(0.9); 
+         z-index: 1;
+     }
+     
+     .hero-overlay {
+         content: '';
+         position: absolute;
+         top: 0;
+         right: 0;
+         bottom: 0;
+         left: 0;
+         /* Opacité augmentée à 0.7 pour un contraste efficace */
+         background: rgba(26, 54, 93, 0.7); 
+     }
+     
+     /* Contenu gauche (Superposé sur le bas de l'image) */
+     .cover-left {
+         position: absolute;
+         top: 50%; 
+         transform: translateY(-50%);
+         left: 0;
+         width: 100%; 
+         padding: 60px;
+         box-sizing: border-box;
+         z-index: 5;
+         color: white; 
+     }
+     
+     .school-main-info {
+         margin-bottom: 25px;
+     }
+     
+     .school-title {
+         font-family: 'Playfair Display', serif;
+         font-size: 5rem; 
+         font-weight: 700;
+         color: white;
+         line-height: 1;
+         text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+     }
+     
+     .school-year {
+         font-size: 1.4rem;
+         margin-top: 10px;
+         color: #ccc;
+         font-weight: 300;
+     }
+     
+     .year-highlight {
+         font-weight: 700;
+         color: #d4af37; 
+     }
+     
+     .badge-row {
+         display: flex;
+         gap: 12px;
+         margin-top: 20px;
+     }
+     
+     .badge {
+         background: rgba(255, 255, 255, 0.2); 
+         color: white;
+         padding: 8px 15px;
+         border-radius: 20px;
+         font-size: 13px;
+         border: 1px solid rgba(255, 255, 255, 0.4);
+         font-weight: 700;
+         text-transform: uppercase;
+         letter-spacing: 0.5px;
+     }
+     
+     /* Styles nécessaires pour le positionnement du texte introductif */
+     .intro-text {
+         margin-top: 40px;
+         max-width: 60%;
+         padding-bottom: 20px; 
+     }
+     
+     /* ⭐ CORRECTION : Forçage du style Jaune/Gras et ajout d'une ombre nette */
+     .muted-note {
+         font-size: 1.1rem; 
+         line-height: 1.6;
+         font-style: normal; 
+         /* Forcer la couleur Jaune/Or et le gras */
+         color: #d4af37 !important; 
+         font-weight: 700 !important; 
+         text-decoration: none; 
+         /* Ombre de texte nette pour un contraste garanti sur le fond sombre */
+         text-shadow: 1px 1px 3px rgba(0, 0, 0, 1), -1px -1px 3px rgba(0, 0, 0, 1);
+     }
+     
+     /* Slogan */
+     .school-slogan {
+         margin-top: 30px;
+         font-size: 1.8rem;
+         font-weight: 700;
+         color: white;
+         font-family: "Playfair Display", serif;
+     }
+     .slogan-quote {
+         font-size: 2.5rem;
+         line-height: 0;
+         vertical-align: middle;
+         color: #d4af37;
+     }
+     
+     /* --- Pied de Page de Production --- */
+     .cover-footer {
+         position: absolute;
+         bottom: 20px;
+         left: 50%;
+         transform: translateX(-50%);
+         z-index: 10;
+         display: flex;
+         gap: 15px;
+         font-size: 0.8rem;
+         color: #ccc;
+         font-weight: 400;
+         text-shadow: 0 1px 1px rgba(0,0,0,0.5);
+     }
+     
+     .production-text {
+         text-transform: uppercase;
+         letter-spacing: 0.5px;
+     }
+     
+     .website-link {
+         color: #d4af37; 
+         font-weight: 700;
+         text-decoration: none;
+     }
+     </style>
+    
+<!-- =========================
+     PAGE 2 : Présentation école
+     ========================= -->
+<!-- =========================
+     PAGE 2 : Présentation école
+     ========================= -->
+     <section class="page presentation-page" aria-label="Présentation de l'école">
+        <div class="section-head">
+            <div class="marker"></div>
+            <h2>Présentation de l'école</h2>
+        </div>
+    
+        <div class="row">
+            <!-- Colonne gauche : image principale + présentation + galerie -->
+            <div class="col col-left">
+                {% if info.image_principale %}
+                    <div class="presentation-image" 
+                         style="background-image:url('{{ info.image_principale.url }}');"></div>
+                {% endif %}
+    
+                <h3>{{ school.nom }} — {% if info %}Année scolaire {{ info.annee_scolaire }}{% endif %}</h3>
+    
+                {% if info.presentation %}
+                    <p>{{ info.presentation }}</p>
+                {% endif %}
+    
+                
+                {% if info.photos.exists %}
+<div class="gallery">
+    {% for photo in info.photos.all %}
+        <div class="img"
+             style="background-image: url('{{ media_url }}{{ photo.image }}');"
+             title="{{ photo.caption|default:'Photo scolaire' }}">
+        </div>
+    {% endfor %}
+</div>
+{% else %}
+<p style="color: #777;">Aucune image dans la galerie.</p>
+{% endif %}
+
+
+            </div>
+    
+            <!-- Colonne droite : mission / valeurs / remerciements -->
+            <div class="col col-right">
+                {% if info.mission %}
+                    <h4>Mission</h4>
+                    <p>{{ info.mission }}</p>
+                {% endif %}
+                {% if info.valeurs %}
+                    <h4>Valeurs</h4>
+                    <p>{{ info.valeurs }}</p>
+                {% endif %}
+                {% if info.remerciements %}
+                    <h4>Remerciements</h4>
+                    <p>{{ info.remerciements }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+    
+    <style>
+    /* Galerie */
+    .gallery {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 14px;
+    }
+    .gallery .img {
+        width: calc(33% - 6.66px);
+        height: 100px;
+        border-radius: 8px;
+        background-size: cover;
+        background-position: center;
+    }
+    </style>
+   
+<!-- =========================
+     PAGE 3: FONDATEUR
+     ========================= -->
+     <section class="page fondateur-page" aria-label="Fondateur">
+        <div class="section-head">
+            <div class="marker"></div>
+            <h2>Présentation du Fondateur</h2>
+        </div>
+    
+        <div class="row fondateur-row">
+            {% for fondateur in school.fondateurs.all %}
+            
+            <!-- Colonne gauche : photo + nom + rôle + vision -->
+            <div class="col col-left" style="max-width:260px; text-align:center;">
+                <div class="fondateur-info">
+                    {% if fondateur.photo_profil %}
+                        <div class="avatar" style="background-image:url('{{ fondateur.photo_profil.url }}'); width:120px; height:120px; border-radius:999px; margin:0 auto;"></div>
+                    {% else %}
+                        <div class="avatar" style="background-image:url('{{ default_fondateur }}'); width:120px; height:120px; border-radius:999px; margin:0 auto;"></div>
+                    {% endif %}
+    
+                    <div style="margin-top:12px;">
+                        <div style="font-weight:700; font-size:16px;">{{ fondateur.nom_complet }}</div>
+                        <div class="muted-note3" style="font-size:14px;">Fondateur & Directeur</div>
+                        
+                        {% if fondateur.vision %}
+                            <h4 style="margin-top:12px; font-size:16px; color:#1a365d;">Vision</h4>
+                            <div style="font-size:14px; font-style:italic; color:#555; margin-top:4px;">
+                                {{ fondateur.vision }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+    
+            <!-- Colonne droite : Biographie / Message -->
+            <div class="col col-right">
+                {% if fondateur.biographie %}
+                    <h4>Biographie</h4>
+                    <p>{{ fondateur.biographie }}</p>
+                {% endif %}
+                {% if fondateur.message_annee %}
+                    <h4>Message pour l'année</h4>
+                    <p>{{ fondateur.message_annee }}</p>
+                {% endif %}
+            </div>
+    
+            {% empty %}
+                <p style="color:#777;">Aucun fondateur enregistré pour cette école.</p>
+            {% endfor %}
+        </div>
+    </section>
+    
+    <style>
+    /* Page Fondateur */
+    .fondateur-page {
+        padding: 40px 30px;
+        box-sizing: border-box;
+        background: #fdfdfd;
+        color: #1a1a1a;
+        page-break-before: always;
+    }
+    
+    .fondateur-page .section-head {
+        display: flex;
+        align-items: center;
+        margin-bottom: 24px;
+        break-inside: avoid;
+    }
+    
+    .fondateur-page .section-head .marker {
+        width: 6px;
+        height: 40px;
+        background-color: #1a365d;
+        margin-right: 12px;
+        border-radius: 3px;
+    }
+    
+    .fondateur-page .section-head h2 {
+        font-size: 28px;
+        color: #1a365d;
+        margin: 0;
+    }
+    
+    .fondateur-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 30px;
+        break-inside: avoid;
+    }
+    
+    .col-left .avatar {
+        background-size: cover;
+        background-position: center;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    
+    .col-left h4 {
+        margin-top: 12px;
+        font-size: 16px;
+        color: #1a365d;
+    }
+    
+    .col-right h4 {
+        font-size: 20px;
+        color: #1a365d;
+        margin-top: 16px;
+        margin-bottom: 6px;
+    }
+    
+    .col-right p {
+        font-size: 16px;
+        line-height: 1.6;
+        margin-bottom: 12px;
+    }
+    </style>
+    
+<!-- =========================
+    <!-- =========================
+     PAGE 4: SUPERVISEURS
+     ========================= -->
+<section class="page superviseur-page" aria-label="Superviseurs">
+    <div class="section-head">
+        <div class="marker"></div>
+        <h2>Superviseurs & Comité de direction</h2>
+    </div>
+
+    <!-- Texte explicatif -->
+    <p class="intro-text">
+        Cette section présente les membres clés de la direction de l'établissement pour l'année scolaire en cours : directeurs, préfets, responsables de discipline et autres superviseurs.
+    </p>
+
+    <div class="cards">
+        {% for sup in school.superviseurs.all %}
+        <div class="card">
+            {% if sup.superviseur.profile_pic %}
+                <div class="avatar" style="background-image:url('{{ sup.superviseur.profile_pic.url }}');"></div>
+            {% else %}
+                <div class="avatar" style="background-image:url('https://bootdey.com/img/Content/avatar/avatar7.png');"></div>
+            {% endif %}
+
+            <div class="name">{{ sup.superviseur.get_full_name|default:sup.superviseur.email }}</div>
+            {% if sup.superviseur.role %}
+                <div class="role">{{ sup.superviseur.role }}</div>
+            {% endif %}
+        </div>
+        {% empty %}
+            <p style="color:#777;">Aucun superviseur enregistré pour cette école.</p>
+        {% endfor %}
+    </div>
+</section>
+
+<style>
+/* Page Superviseurs */
+.superviseur-page {
+    padding: 40px 30px;
+    box-sizing: border-box;
+    background: #fdfdfd;
+    color: #1a1a1a;
+    page-break-before: always;
+}
+
+.superviseur-page .section-head {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+    break-inside: avoid;
+}
+
+.superviseur-page .section-head .marker {
+    width: 6px;
+    height: 40px;
+    background-color: #1a365d;
+    margin-right: 12px;
+    border-radius: 3px;
+}
+
+.superviseur-page .section-head h2 {
+    font-size: 28px;
+    color: #1a365d;
+    margin: 0;
+}
+
+/* Texte introductif */
+.superviseur-page .intro-text {
+    margin: 12px 0 24px 0;
+    font-size: 16px;
+    color: #333;
+    line-height: 1.5;
+    max-width: 700px;
+}
+
+/* Cartes des superviseurs */
+.cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    margin-top: 20px;
+}
+
+.card {
+    width: 200px;
+    text-align: center;
+    padding: 16px;
+    border-radius: 12px;
+    background: #f8f8f8;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    break-inside: avoid;
+}
+
+.card .avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 999px;
+    background-size: cover;
+    background-position: center;
+    margin: 0 auto 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.card .name {
+    font-weight: 700;
+    font-size: 16px;
+    margin-bottom: 4px;
+}
+
+.card .role {
+    font-size: 14px;
+    color: #555;
+    font-style: italic;
+}
+</style>
+
+<!-- =========================
+     PAGE 5: CORPS DES ENSEIGNANTS
+     ========================= -->
+     <section class="page enseignants-page" aria-label="Enseignants">
+        <div class="section-head">
+          <div class="marker"></div>
+          <h2>Corps enseignant</h2>
+        </div>
+      
+        <p>Voici les enseignants assignés aux classes et matières de cette année scolaire, assurant l'encadrement académique des élèves.</p>
+      
+        <div class="cards">
+          {% for prof in enseignants %}
+            <div class="card">
+              {% if prof.profile_pic %}
+                <div class="avatar" style="background-image:url('{{ prof.profile_pic.url }}');"></div>
+              {% else %}
+                <div class="avatar" style="background-image:url('https://bootdey.com/img/Content/avatar/avatar7.png');"></div>
+              {% endif %}
+              <div class="name">{{ prof.get_full_name|default:prof.email }}</div>
+              {% if prof.role %}
+                <div class="role">{{ prof.bio|truncatewords:30 }}</div>
+              {% endif %}
+            </div>
+          {% empty %}
+            <p style="color:#777;">Aucun enseignant enregistré pour cette école.</p>
+          {% endfor %}
+        </div>
+      </section>
+      
+      <style>
+      .enseignants-page {
+          padding: 40px 30px;
+          box-sizing: border-box;
+          background: #fdfdfd;
+          color: #1a1a1a;
+          page-break-before: always;
+      }
+      .enseignants-page .section-head {
+          display: flex;
+          align-items: center;
+          margin-bottom: 24px;
+          break-inside: avoid;
+      }
+      .enseignants-page .section-head .marker {
+          width: 6px;
+          height: 40px;
+          background-color: #1a365d;
+          margin-right: 12px;
+          border-radius: 3px;
+      }
+      .enseignants-page .section-head h2 {
+          font-size: 28px;
+          color: #1a365d;
+          margin: 0;
+      }
+      .cards {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 24px;
+          margin-top: 20px;
+      }
+      .card {
+          width: 200px;
+          text-align: center;
+          padding: 16px;
+          border-radius: 12px;
+          background: #f8f8f8;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+          break-inside: avoid;
+      }
+      .card .avatar {
+          width: 120px;
+          height: 120px;
+          border-radius: 999px;
+          background-size: cover;
+          background-position: center;
+          margin: 0 auto 12px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      }
+      .card .name {
+          font-weight: 700;
+          font-size: 16px;
+          margin-bottom: 4px;
+      }
+      .card .role {
+          font-size: 14px;
+          color: #555;
+          font-style: italic;
+      }
+      </style>
+
+      <!-- =========================
+     PAGE 6: CLASSES
+     ========================= -->
+     {% load static %}
+<section class="page classes-page" aria-label="Classes">
+    
+    <div class="page-header">
+        <span class="header-line"></span>
+        <h2>L'Album des Classes</h2>
+    </div>
+
+    {% for classe in school.classes.all %}
+    <article class="class-wrapper">
+        
+        <div class="class-hero">
+            <h3 class="class-title">{{ classe.nom }}</h3>
+            <div class="class-image-container">
+                <img 
+                    src="{% if classe.photo_classe %}{{ classe.photo_classe.url }}{% else %}{{ default_photo }}{% endif %}" 
+                    alt="Photo de la classe {{ classe.nom }}"
+                    class="main-photo"
+                >
+            </div>
+        </div>
+
+        <div class="class-content-grid">
+            
+            <aside class="class-sidebar">
+                
+                {# ⭐ MODIFIÉ : PLACE DU PROFESSEUR EN PREMIER #}
+                {% if classe.titulaire %}
+                <div class="teacher-card">
+                    <div class="teacher-header">
+                        <div class="teacher-avatar">
+                            {% if classe.titulaire.profile_pic %}
+                                <img src="{{ classe.titulaire.profile_pic.url }}" alt="Professeur">
+                            {% else %}
+                                <img src="{% static 'img/fondateur.jpg' %}" alt="Avatar par défaut">
+                            {% endif %}
+                        </div>
+                        <div class="teacher-info">
+                            <span class="role-label">Professeur Titulaire</span>
+                            <h4 class="teacher-name">{{ classe.titulaire.get_full_name|default:classe.titulaire.email }}</h4>
+                        </div>
+                    </div>
+                    
+                    {% if classe.titulaire.bio %}
+                    <div class="teacher-bio">
+                        {{ classe.titulaire.bio|truncatewords:20 }}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                {# ⭐ MODIFIÉ : MOT DES ÉLÈVES EN DEUXIÈME AVEC TITRE #}
+                {% if classe.mot_des_eleves %}
+                <div class="class-quote">
+                    <h5 class="quote-title">Mot des Élèves</h5>
+                    <span class="quote-mark">“</span>
+                    <p>{{ classe.mot_des_eleves }}</p>
+                </div>
+                {% endif %}
+            </aside>
+
+            <div class="students-section">
+                <h4 class="students-header">Les Élèves</h4>
+                <div class="students-grid">
+                    {% for eleve in classe.eleves.all %}
+                        {% if eleve.is_active %}
+                        <div class="student-item">
+                            <div class="student-img-wrapper">
+                                {% if eleve.image_profil %}
+                                    <img src="{{ eleve.image_profil.url }}" alt="{{ eleve.nom }}">
+                                {% else %}
+                                    <img src="{{ default_photo }}" alt="{{ eleve.nom }}">
+                                {% endif %}
+                            </div>
+                            <span class="student-name">{{ eleve.nom }}</span>
+                        </div>
+                        {% endif %}
+                    {% empty %}
+                        <p class="no-students">Liste en cours de constitution...</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+        </div>
+        
+        <div class="divider-line"></div>
+
+    </article>
+    {% endfor %}
+</section>
+
+<style>
+/* 🔑 AJOUT CRITIQUE POUR LE PDF : Déclaration des polices locales */
+
+/* --- PLAYFAIR DISPLAY (Pour les titres) --- */
+@font-face {
+    font-family: 'Playfair Display';
+    src: url('file://{{ base_dir }}/static/fonts/PlayfairDisplay-Regular.ttf') format('truetype');
+    font-weight: 400; /* Regular */
+    font-style: normal;
+}
+@font-face {
+    font-family: 'Playfair Display';
+    src: url('file://{{ base_dir }}/static/fonts/PlayfairDisplay-Bold.ttf') format('truetype');
+    font-weight: 700; /* Bold */
+    font-style: normal;
+}
+@font-face {
+    font-family: 'Playfair Display';
+    src: url('file://{{ base_dir }}/static/fonts/PlayfairDisplay-Italic.ttf') format('truetype');
+    font-weight: 400;
+    font-style: italic;
+}
+
+/* --- LATO (Pour le corps de texte) --- */
+@font-face {
+    font-family: 'Lato';
+    src: url('file://{{ base_dir }}/static/fonts/Lato-Regular.ttf') format('truetype');
+    font-weight: 400; /* Regular */
+    font-style: normal;
+}
+@font-face {
+    font-family: 'Lato';
+    src: url('file://{{ base_dir }}/static/fonts/Lato-Bold.ttf') format('truetype');
+    font-weight: 700; /* Bold */
+    font-style: normal;
+}
+@font-face {
+    font-family: 'Lato';
+    src: url('file://{{ base_dir }}/static/fonts/Lato-Light.ttf') format('truetype');
+    font-weight: 300; /* Light */
+    font-style: normal;
+}
+
+/* --- RESET & BASE --- */
+.classes-page {
+    background: #fff;
+    color: #333;
+    font-family: 'Lato', sans-serif;
+    padding: 40px;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+/* --- HEADER DE PAGE --- */
+.page-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 40px;
+}
+.header-line {
+    width: 40px;
+    height: 2px;
+    background-color: #d4af37;
+    margin-right: 15px;
+}
+.page-header h2 {
+    font-family: 'Playfair Display', serif;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-size: 14px;
+    color: #888;
+    margin: 0;
+}
+
+/* --- BLOC PRINCIPAL CLASSE --- */
+.class-wrapper {
+    margin-bottom: 60px;
+    /* Pour la compatibilité PDF/print */
+    page-break-inside: auto; 
+    break-inside: auto;
+}
+
+/* Titre de la classe */
+.class-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 3rem; 
+    margin: 0 0 15px 0;
+    color: #1a1a1a;
+    line-height: 1;
+}
+
+/* Photo de classe */
+.class-image-container {
+    width: 100%;
+    height: 300px; 
+    overflow: hidden;
+    margin-bottom: 30px;
+    border-bottom: 4px solid #d4af37; 
+}
+.main-photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; 
+    object-position: center 20%; 
+    filter: grayscale(10%) contrast(105%); 
+}
+
+/* --- GRILLE LAYOUT (Sidebar + Élèves) --- */
+.class-content-grid {
+    display: grid;
+    grid-template-columns: 280px 1fr; 
+    gap: 40px;
+}
+
+/* --- SIDEBAR (Prof & Citation) --- */
+.class-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+/* Citation */
+.class-quote {
+    background: #f9f9f9;
+    padding: 20px;
+    position: relative;
+    border-left: 3px solid #1a365d;
+    /* Pour la compatibilité PDF/print */
+    break-inside: avoid;
+}
+/* ⭐ NOUVEAU STYLE : Titre du mot des élèves */
+.quote-title {
+    font-family: 'Lato', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #1a365d;
+    margin: 0 0 10px 0;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #eee;
+}
+.quote-mark {
+    position: absolute;
+    top: -10px;
+    left: 10px;
+    font-size: 4rem;
+    color: #e0e0e0;
+    z-index: 0;
+    font-family: serif;
+}
+.class-quote p {
+    position: relative;
+    z-index: 1;
+    margin: 0;
+    font-family: 'Playfair Display', serif; /* Garde la police Playfair pour le texte */
+    font-style: italic;
+    color: #555;
+    font-size: 1.1rem;
+}
+
+/* Carte Prof */
+.teacher-card {
+    border: 1px solid #eee;
+    padding: 20px;
+    /* Pour la compatibilité PDF/print */
+    break-inside: avoid;
+}
+.teacher-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+.teacher-avatar img {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #fff;
+    box-shadow: 0 0px 8px rgba(0,0,0,0.1);
+}
+.role-label {
+    display: block;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #999;
+    margin-bottom: 2px;
+}
+.teacher-name {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1a365d;
+}
+.teacher-bio {
+    font-size: 0.85rem;
+    color: #666;
+    line-height: 1.5;
+    border-top: 1px solid #f0f0f0;
+    padding-top: 10px;
+}
+
+/* --- SECTION ÉLÈVES --- */
+.students-section {
+    padding-top: 10px;
+    /* Pour la compatibilité PDF/print */
+    break-inside: auto;
+}
+.students-header {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.2rem;
+    margin: 0 0 20px 0;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+    display: inline-block;
+}
+
+/* Grille moderne */
+.students-grid {
+    display: grid;
+    /* 4 colonnes fixes */
+    grid-template-columns: repeat(4, 1fr); 
+    gap: 20px;
+    row-gap: 30px;
+    /* Pour la compatibilité PDF/print */
+    overflow: visible;
+}
+
+.student-item {
+    text-align: center;
+    transition: transform 0.2s ease;
+    /* Pour la compatibilité PDF/print */
+    break-inside: avoid;
+}
+@media (hover: hover) {
+    .student-item:hover {
+        transform: translateY(-5px);
+    }
+}
+
+.student-img-wrapper {
+    width: 70px;
+    height: 70px;
+    margin: 0 auto 8px auto;
+    border-radius: 50%; 
+    padding: 3px;
+    border: 1px solid #eee; 
+}
+.student-img-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+    filter: grayscale(20%); 
+}
+.student-name {
+    display: block;
+    font-size: 0.8rem;
+    line-height: 1.2;
+    color: #333;
+    font-weight: 600;
+    /* Permet le retour à la ligne des noms longs */
+    word-break: break-word; 
+    max-width: 100%; 
+}
+.no-students {
+    color: #999;
+    font-style: italic;
+    grid-column: 1 / -1;
+}
+
+.divider-line {
+    margin-top: 50px;
+    height: 1px;
+    background: linear-gradient(to right, transparent, #ddd, transparent);
+}
+
+/* --- RESPONSIVE (Mobile) --- */
+@media (max-width: 768px) {
+    .class-content-grid {
+        grid-template-columns: 1fr; 
+        gap: 30px;
+    }
+    .class-title {
+        font-size: 2rem;
+    }
+    .class-image-container {
+        height: 200px;
+    }
+    /* 3 colonnes sur mobile si la place le permet */
+    .students-grid {
+        grid-template-columns: repeat(3, 1fr); 
+    }
+}
+
+/* --- PRINT CSS (Important pour les PDF/Impression) --- */
+@media print {
+    .class-wrapper {
+        /* Permet la rupture de contenu long mais force une rupture après l'article */
+        break-after: always;
+        break-inside: auto; 
+    }
+    .class-image-container {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+    .class-quote, .teacher-card {
+        background-color: #f9f9f9 !important;
+        -webkit-print-color-adjust: exact;
+        break-inside: avoid;
+    }
+    /* Assure que la grille 4x fonctionne et ne bloque pas la pagination */
+    .students-grid {
+        grid-template-columns: repeat(4, 1fr) !important;
+        overflow: visible !important; 
+    }
+}
+</style>
+  
+ <!-- =========================
+     STATISTIQUES DE L'ANNÉE
+     ========================= -->
+<section class="page stats-page" aria-label="Statistiques">
+    <div class="section-head">
+        <div class="marker"></div>
+        <h2>Statistiques de l'année</h2>
+    </div>
+
+    <div class="stats-column">
+
+        <!-- Nombre total d'élèves & répartition -->
+        <div class="stat-block">
+            <div class="muted-note2">Nombre total d'élèves</div>
+            <div class="big">{{ total_eleves }}</div>
+
+            <div class="muted-note2" style="margin-top:8px;">Répartition par sexe</div>
+            <div class="gender-bars">
+                <div>
+                    <div class="muted-note2">Mâles</div>
+                    <div class="bar">
+                        {% if total_eleves > 0 %}
+                        <i style="width:{{ pct_males }}%; background:#3b82f6;"></i>
+                        {% endif %}
+                    </div>
+                    <div class="muted-note2">{{ pct_males }}%</div>
+                </div>
+                <div>
+                    <div class="muted-note2">Femmes</div>
+                    <div class="bar">
+                        {% if total_eleves > 0 %}
+                        <i style="width:{{ pct_females }}%; background:linear-gradient(90deg,#f24 0,#f59 100%);"></i>
+                        {% endif %}
+                    </div>
+                    <div class="muted-note2">{{ pct_females }}%</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Taux de réussite et échecs -->
+        <div class="stat-block">
+            <div class="muted-note2">Taux de réussite</div>
+            <div class="big">{{ pourcentage_reussite|floatformat:2 }}%</div>
+
+            <div class="muted-note2" style="margin-top:12px;">Réussite vs Échecs</div>
+            <div class="success-fail">
+                <div class="pie" title="{{ pourcentage_reussite|floatformat:0 }}% réussite">
+                    {{ pourcentage_reussite|floatformat:0 }}%
+                </div>
+                <div class="numbers">
+                    <div class="muted-note2">Nombre réussite</div>
+                    <div class="big">{{ nombre_reussites }}</div>
+
+                    <div class="muted-note2" style="margin-top:4px;">Nombre d'échecs (&lt;50%)</div>
+                    <div class="big fail">{{ nombre_echecs }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Performance par période -->
+        <div class="stat-block">
+            <div class="muted-note2">Progression par période</div>
+            <div class="bars-column">
+                {% for perf in performance_par_periode %}
+                    <div style="display:flex; justify-content: space-between; align-items:center;">
+                        <div class="muted-note2">{{ perf.periode }}</div>
+                        <div class="muted-note2">{{ perf.pourcentage|floatformat:2 }}%</div>
+                    </div>
+                    <div class="bar">
+                        <i style="width:{{ perf.pourcentage|floatformat:2 }}%; background:#3b82f6;"></i>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<!-- =========================
+     CSS INLINE (pour PDF)
+     ========================= -->
+<style>
+.stats-page {
+    padding: 40px 30px;
+    box-sizing: border-box;
+    background: #fdfdfd;
+    color: #1a1a1a;
+    page-break-before: always;
+}
+.stats-page .section-head {
+    display: flex;
+    align-items: center;
+    margin-bottom: 24px;
+    break-inside: avoid;
+}
+.stats-page .section-head .marker {
+    width: 6px;
+    height: 40px;
+    background-color: #1a365d;
+    margin-right: 12px;
+    border-radius: 3px;
+}
+.stats-page .section-head h2 {
+    font-size: 28px;
+    color: #1a365d;
+    margin: 0;
+}
+.stats-column {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+.stat-block {
+    break-inside: avoid;
+}
+.big { 
+    font-weight: bold; 
+    font-size: 32px;
+    margin: 4px 0;
+}
+.muted-note2 { 
+    color: #555; 
+    font-size: 14px; 
+    font-style: italic;
+}
+.gender-bars div {
+    margin-top: 8px;
+}
+.bar {
+    background: #e5e7eb;
+    height: 12px;
+    border-radius: 6px;
+    overflow: hidden;
+}
+.bar i {
+    display: block;
+    height: 100%;
+    transition: width 0.5s ease;
+}
+.success-fail {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 8px;
+}
+.pie {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: #3b82f6;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px;
+}
+.numbers .fail {
+    color: #e11d48;
+}
+.bars-column {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 8px;
+}
+</style>
+
+    
+    
+<!-- =========================
+     PAGE 8: REMERCIEMENTS
+     ========================= -->
+     <section class="page thanks-page" aria-label="Remerciements">
+    
+        <div class="thanks-content">
+            
+            <div class="thanks-image">
+                <div class="image-wrapper"
+                     style="background-image:url('{{ default_photo }}');">
+                </div>
+            </div>
+            
+            <div class="thanks-text">
+                
+                <div class="section-head">
+                    <div class="marker"></div>
+                    <h2>Remerciements</h2>
+                </div>
+    
+                <h3 class="thanks-title">Merci à tous</h3>
+                
+                <div class="thanks-message">
+                    {% if info.remerciements %}
+                        <p>{{ info.remerciements }}</p>
+                    {% else %}
+                        {# Texte basé sur l'information du PDF pour une meilleure cohérence #}
+                        <p>
+                            [cite_start]Nous remercions chaleureusement nos enseignants, parents et partenaires pour leur confiance et leur engagement continu[cite: 86]. [cite_start]Votre soutien nous permet de continuer à inspirer et former les leaders de demain[cite: 87].
+                        </p>
+                    {% endif %}
+                </div>
+                
+                <div class="signature">
+                    <p>— La Direction de {{ school.nom }}</p>
+                </div>
+            </div>
+            
+        </div>
+    </section>
+    
+    <style>
+    /* 🔑 Déclaration des polices locales (reprises) */
+    @font-face {
+        font-family: 'Playfair Display';
+        src: url('file://{{ base_dir }}/static/fonts/PlayfairDisplay-Bold.ttf') format('truetype');
+        font-weight: 700;
+    }
+    @font-face {
+        font-family: 'Lato';
+        src: url('file://{{ base_dir }}/static/fonts/Lato-Regular.ttf') format('truetype');
+        font-weight: 400;
+    }
+    @font-face {
+        font-family: 'Lato';
+        src: url('file://{{ base_dir }}/static/fonts/Lato-Bold.ttf') format('truetype');
+        font-weight: 700;
+    }
+    
+    .thanks-page {
+        padding: 60px 50px; /* Padding augmenté */
+        box-sizing: border-box;
+        background: #fcfcfc; /* Fond très clair */
+        color: #1a1a1a;
+        page-break-before: always;
+        font-family: 'Lato', sans-serif;
+    }
+    
+    .thanks-page .section-head {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+        break-inside: avoid;
+        opacity: 0.7; /* Subtil */
+    }
+    .thanks-page .section-head .marker {
+        width: 4px; /* Marqueur plus fin */
+        height: 30px;
+        background-color: #d4af37; /* Couleur Or */
+        margin-right: 12px;
+        border-radius: 2px;
+    }
+    .thanks-page .section-head h2 {
+        font-size: 20px;
+        color: #333;
+        margin: 0;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .thanks-content {
+        display: flex;
+        gap: 50px; /* Grand écart */
+        align-items: flex-start; /* Alignement en haut */
+    }
+    
+    /* --- Colonne Image --- */
+    .thanks-image {
+        width: 40%;
+        order: 1; /* Place l'image à gauche */
+    }
+    .thanks-image .image-wrapper {
+        height: 300px; /* Hauteur plus importante */
+        width: 100%;
+        background-size: cover;
+        background-position: center;
+        border-radius: 12px; /* Bords légèrement arrondis */
+        box-shadow: 0 8px 25px rgba(0,0,0,0.2); /* Ombre plus marquée */
+        border: 5px solid #fff; /* Bordure blanche pour simuler un cadre */
+    }
+    
+    /* --- Colonne Texte --- */
+    .thanks-text {
+        flex: 1;
+        order: 2; /* Place le texte à droite */
+    }
+    
+    .thanks-title {
+        font-family: 'Playfair Display', serif;
+        font-size: 36px; /* Grand titre */
+        font-weight: 700;
+        color: #1a365d;
+        margin-top: 10px;
+        margin-bottom: 20px;
+    }
+    
+    .thanks-message p {
+        font-size: 17px;
+        line-height: 1.6;
+        color: #444;
+        margin-bottom: 30px;
+        border-left: 3px solid #eee; /* Ligne de démarcation subtile */
+        padding-left: 20px;
+        font-style: italic;
+    }
+    
+    .signature p {
+        font-size: 16px;
+        font-weight: 700;
+        color: #1a365d;
+        margin: 0;
+    }
+    
+    /* Responsive pour éviter le chevauchement si le contenu déborde */
+    @media screen and (max-width: 768px) {
+        .thanks-content {
+            flex-direction: column;
+        }
+        .thanks-image, .thanks-text {
+            width: 100%;
+            order: initial;
+        }
+        .thanks-image .image-wrapper {
+            height: 200px;
+        }
+    }
+    </style>
+    {% comment %}  {% endcomment %}
+    <!-- =========================
+     PAGE 2: SOMMAIRE
+     ========================= -->
+<section class="page summary-page" aria-label="Sommaire">
+    
+    <div class="summary-wrapper">
+        
+        <!-- Titre de la section -->
+        <div class="summary-head">
+            <h2 class="magazine-section-title">SOMMAIRE</h2>
+            <div class="school-motto">Le souvenir d'une année exceptionnelle.</div>
+        </div>
+
+        <!-- Liste des points (Table des matières) -->
+        <div class="summary-grid">
+            
+            <div class="summary-item item-major">
+                <span class="page-number">03</span>
+                <span class="section-title">Présentation de l'École</span>
+                <span class="description">Mission, valeurs et vision de l'établissement.</span>
+            </div>
+            
+            <div class="summary-item">
+                <span class="page-number">xx</span>
+                <span class="section-title">Le Corps de Direction</span>
+                <span class="description">Fondateur, Superviseurs & Comité de direction.</span>
+            </div>
+            
+            <div class="summary-item">
+                <span class="page-number">xx</span>
+                <span class="section-title">Corps Enseignant</span>
+                <span class="description">L'équipe pédagogique dédiée à votre succès.</span>
+            </div>
+            
+            <div class="summary-item item-major">
+                <span class="page-number">xx</span>
+                <span class="section-title">L'Album des Classes</span>
+                <span class="description">Trombinoscope de la promotion {{ classe.nom|default:"N/A" }}.</span>
+            </div>
+            
+            <div class="summary-item">
+                <span class="page-number">xx</span>
+                <span class="section-title">Statistiques de l'Année</span>
+                <span class="description">Taux de réussite et progression académique.</span>
+            </div>
+            
+            <div class="summary-item">
+                <span class="page-number">xx</span>
+                <span class="section-title">Remerciements</span>
+                <span class="description">Un mot de la direction à la communauté.</span>
+            </div>
+
+        </div>
+
+    </div>
+</section>
+
+<!-- =========================
+         CSS INLINE (pour PDF)
+         ========================= -->
+<style>
+/* 🔑 Déclaration des polices locales (reprises) */
+@font-face {
+    font-family: 'Playfair Display';
+    src: url('file://{{ base_dir }}/static/fonts/PlayfairDisplay-Bold.ttf') format('truetype');
+    font-weight: 700;
+}
+@font-face {
+    font-family: 'Lato';
+    src: url('file://{{ base_dir }}/static/fonts/Lato-Regular.ttf') format('truetype');
+    font-weight: 400;
+}
+@font-face {
+    font-family: 'Lato';
+    src: url('file://{{ base_dir }}/static/fonts/Lato-Bold.ttf') format('truetype');
+    font-weight: 700;
+}
+
+.summary-page {
+    padding: 60px 80px; /* Grande marge pour un aspect premium */
+    box-sizing: border-box;
+    background: #fff;
+    color: #1a1a1a;
+    page-break-before: always;
+    font-family: 'Lato', sans-serif;
+}
+
+.summary-wrapper {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+/* --- Tête de section --- */
+.summary-head {
+    margin-bottom: 50px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #1a365d; /* Ligne de séparation forte */
+}
+
+.magazine-section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 48px; /* Très grand titre */
+    font-weight: 700;
+    color: #1a365d; /* Bleu marine */
+    margin: 0;
+    line-height: 1;
+}
+
+.school-motto {
+    font-size: 16px;
+    color: #444;
+    margin-top: 10px;
+    font-style: italic;
+}
+
+/* --- Grille du Sommaire --- */
+.summary-grid {
+    display: grid;
+    gap: 30px;
+    padding-top: 20px;
+}
+
+.summary-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px dashed #ddd; /* Séparation subtile */
+    padding-bottom: 15px;
+}
+
+/* Accentuation des sections majeures */
+.summary-item.item-major {
+    border-bottom: 2px solid #1a365d; /* Ligne forte pour les titres majeurs */
+    padding-bottom: 20px;
+    margin-top: 15px;
+}
+
+.summary-item .page-number {
+    font-family: 'Playfair Display', serif;
+    font-size: 32px; /* Gros numéro de page */
+    font-weight: 700;
+    color: #d4af37; /* Couleur Or */
+    flex-shrink: 0;
+    margin-right: 30px;
+}
+
+.summary-item .section-title {
+    flex-grow: 1;
+    text-align: left;
+    font-size: 20px;
+    font-weight: 700;
+    color: #1a365d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.summary-item .description {
+    flex-shrink: 0;
+    width: 35%; /* Laisser de la place pour la description */
+    text-align: right;
+    font-size: 14px;
+    color: #777;
+    font-style: italic;
+    margin-left: 20px;
+}
+
+.summary-item.item-major .page-number {
+    font-size: 40px; 
+}
+.summary-item.item-major .section-title {
+    font-size: 24px;
+    color: #1a365d;
+}
+</style>
+{% comment %}  {% endcomment %}
+    <section class="page verso-page" aria-label="Verso">
+        <div class="verso" style="background-image:url('{{ default_photo }}');">
+            
+            <div class="verso-overlay"></div>
+            
+            <div class="verso-center">
+                
+                <div class="verso-logo">
+                    {% if info and info.logo %}
+                        <img src="{{ info.logo.url }}" alt="Logo école">
+                    {% endif %}
+                </div>
+                
+                <h1 class="verso-title">{{ school.nom }}</h1>
+                
+                <div class="verso-year">
+                    SOUVENIR SCOLAIRE — Année {{ info.annee_scolaire }}
+                </div>
+    
+                {% if info.slogan %}
+                    <div class="verso-slogan">« {{ info.slogan }} »</div>
+                {% else %}
+                    <div class="verso-slogan">« Savoir, Servir, Grandir »</div>
+                {% endif %}
+    
+            </div>
+            
+            <div class="verso-footer">
+                <span class="production-text">PRODUCTION DE SCHOOL NOTE</span>
+                <span class="website-link">schoolnote.com</span>
+            </div>
+        </div>
+    </section>
+    
+    <style>
+    /* 🔑 Déclaration des polices locales (reprises de la page 1) */
+    @font-face {
+        font-family: 'Playfair Display';
+        src: url('file://{{ base_dir }}/static/fonts/PlayfairDisplay-Bold.ttf') format('truetype');
+        font-weight: 700;
+    }
+    @font-face {
+        font-family: 'Lato';
+        src: url('file://{{ base_dir }}/static/fonts/Lato-Regular.ttf') format('truetype');
+        font-weight: 400;
+    }
+    @font-face {
+        font-family: 'Lato';
+        src: url('file://{{ base_dir }}/static/fonts/Lato-Bold.ttf') format('truetype');
+        font-weight: 700;
+    }
+    
+    .verso-page {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        page-break-before: always;
+        font-family: 'Lato', sans-serif;
+    }
+    
+    .verso {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        background-size: cover;
+        background-position: center;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        padding: 0; /* Padding retiré du parent pour le plein écran */
+        box-sizing: border-box;
+    }
+    
+    /* NOUVEAU: Overlay pour le contraste */
+    .verso-overlay {
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        background: rgba(0, 0, 0, 0.75); /* Noir semi-transparent très sombre */
+        z-index: 1;
+    }
+    
+    /* Conteneur principal au centre */
+    .verso-center {
+        position: relative;
+        z-index: 5;
+        color: #fff;
+        padding: 40px;
+    }
+    
+    /* Logo (centré) */
+    .verso-logo {
+        margin-bottom: 20px;
+    }
+    
+    .verso-logo img {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 4px solid #d4af37; /* Bordure Or */
+        box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    }
+    
+    /* Nom de l'école */
+    .verso-title {
+        font-family: 'Playfair Display', serif;
+        font-size: 3.5rem; /* Très grand pour l'impact */
+        font-weight: 700;
+        margin: 0;
+        line-height: 1.1;
+        text-shadow: 1px 1px 4px rgba(0,0,0,0.8);
+        color: #fff;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+    }
+    
+    /* Année scolaire */
+    .verso-year {
+        font-size: 1.2rem;
+        margin-top: 15px;
+        color: #ccc;
+        font-weight: 400;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    /* Slogan */
+    .verso-slogan {
+        font-family: 'Playfair Display', serif;
+        font-size: 1.8rem;
+        font-style: italic;
+        margin-top: 40px;
+        color: #d4af37; /* Couleur Or */
+        font-weight: 700;
+        text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+    }
+    
+    /* Pied de page */
+    .verso-footer {
+        position: absolute;
+        bottom: 30px;
+        width: 100%;
+        text-align: center;
+        font-size: 0.9rem;
+        z-index: 5;
+        color: #999;
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+    }
+    
+    .verso-footer .production-text {
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .verso-footer .website-link {
+        color: #d4af37; /* Or pour le lien */
+        font-weight: 700;
+        text-decoration: none;
+    }
+    </style>
+
+</body>
+</html> 
+
+
+
+{% comment %} <!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Souvenir Scolaire — {{ school.nom }}</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    font-family: 'Inter', sans-serif;
+    color: white;
+  }
+
+  /* Pour PDF : taille A4 */
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
+  .cover {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+  }
+
+  /* Logos aux coins */
+  .top-left, .top-right {
+    position: absolute;
+    top: 20px;
+  }
+  .top-left { left: 20px; }
+  .top-right { right: 20px; }
+
+  .top-left img, .top-right img {
+    width: 70px;
+    height: 70px;
+    object-fit: cover;
+    border-radius: 12px;
+    border: 2px solid white;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  }
+
+  /* Contenu central */
+  .center-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    flex-grow: 1;
+    text-align: center;
+    padding: 0 20px;
+    text-shadow: 0 3px 12px rgba(0,0,0,0.6);
+  }
+
+  .center-content h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 42px;
+    font-weight: 700;
+    margin: 0;
+  }
+  .center-content .year {
+    font-size: 26px;
+    font-weight: 600;
+    margin-top: 8px;
+  }
+  .center-content .slogan {
+    font-family: 'Playfair Display', serif;
+    font-size: 36px;
+    font-weight: 800;
+    margin-top: 16px;
+    line-height: 1.3;
+  }
+
+  /* Texte bas de page */
+  .bottom {
+    text-align: center;
+    padding: 24px 16px;
+    font-size: 16px;
+    line-height: 1.4;
+  }
+  .bottom .main-text {
+    margin-bottom: 12px;
+    font-style: italic;
+  }
+  .bottom .note {
+    font-weight: 600;
+  }
+</style>
+</head>
+<body>
+
+<div class="cover"
+     {% if info and info.image_principale %}
+        style="background-image: url('{{ info.image_principale.url }}');"
+     {% else %}
+        style="background-image: url('{{ default_photo }}');"
+     {% endif %}
+>
+    <!-- Logo coin gauche -->
+    <div class="top-left">
+      {% if info and info.logo %}
+        <img src="{{ info.logo.url }}" alt="Logo école">
+      {% else %}
+        <img src="{{ default_logo }}" alt="Logo école">
+      {% endif %}
+    </div>
+
+    <!-- Drapeau coin droit -->
+    <div class="top-right">
+      <img src="{{ country_flag_url }}" alt="Drapeau">
+    </div>
+
+    <!-- Contenu central : nom + année + slogan -->
+    <div class="center-content">
+      <h1>{{ school.nom }}</h1>
+      <div class="year">
+        {% if info %}Année scolaire {{ info.annee_scolaire }}{% else %}Année scolaire {{ school.annee_scolaire }}{% endif %}
+      </div>
+      {% if info and info.slogan %}
+        <div class="slogan">{{ info.slogan }}</div>
+      {% endif %}
+    </div>
+
+    <!-- Texte bas -->
+    <div class="bottom">
+      <div class="main-text">
+        Souvenir officiel de l'établissement — Une rétrospective illustrée des temps forts, des professeurs et des élèves de l'année scolaire.
+      </div>
+      <div class="note">
+        Production School Note
+      </div>
+    </div>
+</div>
+
+</body>
+</html> {% endcomment %}

@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Assigner Élève - {{ classe.nom }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-900 py-12 px-4 sm:px-6 lg:px-8 text-white">
+  <div class="max-w-4xl mx-auto bg-gray-800 rounded-lg shadow-lg p-8">
+
+    <h2 class="text-3xl font-bold text-center text-indigo-400 mb-8">
+      Assigner un élève à {{ classe.nom }}
+    </h2>
+
+    <!-- Formulaire assignation élève -->
+    <form method="POST" class="flex flex-col sm:flex-row gap-2 items-center mb-6">
+      {% csrf_token %}
+      
+      <!-- Sélection des élèves déjà existants dans la classe -->
+      <select name="eleve_id" id="selectEleve" class="w-full sm:w-1/3 rounded-md border-gray-300 text-red-600">
+        <option value="">-- Sélectionner un élève --</option>
+        {% for eleve in eleves %}
+          <option value="{{ eleve.id }}">{{ eleve.nom }}</option>
+        {% endfor %}
+      </select>
+
+      <!-- Sélection d'un utilisateur existant -->
+      <select name="user_id" id="selectUser" class="w-full sm:w-1/3 rounded-md border-gray-300 text-red-600">
+        <option value="">-- Sélectionner un utilisateur --</option>
+        {% for user in users_actifs %}
+          <option value="{{ user.id }}">{{ user.get_full_name }} ({{ user.email }})</option>
+        {% endfor %}
+      </select>
+
+      <button type="submit"
+              class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md transition duration-300">
+        Assigner
+      </button>
+    </form>
+
+    <!-- Liste des élèves assignés -->
+    <div class="mt-6">
+      <h3 class="text-xl font-semibold text-green-400 mb-4">Élèves assignés</h3>
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-700">
+          <thead>
+            <tr class="bg-gray-700">
+              <th class="px-4 py-2 text-left text-sm font-medium text-white">Nom</th>
+              <th class="px-4 py-2 text-left text-sm font-medium text-white">Utilisateur</th>
+              <th class="px-4 py-2 text-left text-sm font-medium text-white">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-700">
+            {% for eleve in eleves %}
+            <tr>
+              <td class="px-4 py-2 text-red-600">{{ eleve.nom }}</td>
+              <td class="px-4 py-2 text-white">
+                {% if eleve.eleve %}
+                  {{ eleve.eleve.get_full_name }} ({{ eleve.eleve.email }})
+                {% else %}
+                  Aucun
+                {% endif %}
+              </td>
+              <td class="px-4 py-2">
+                <button type="button"
+                onclick="editAssignment('{{ eleve.id }}', '{% if eleve.eleve %}{{ eleve.eleve.id }}{% else %}{% endif %}')"
+                class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded text-sm">
+          Modifier
+        </button>
+        
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="3" class="px-4 py-2 text-gray-400">Aucun élève assigné</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TomSelect -->
+<link href="https://cdn.jsdelivr.net/npm/tom-select/dist/css/tom-select.bootstrap5.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // Select utilisateur
+    new TomSelect("#selectUser", {
+        valueField: "value",
+        labelField: "text",
+        searchField: ["text","email"],
+        render: {
+            option: function(item, escape) { return `<div class="text-gray-900 bg-white p-1 rounded-md hover:bg-gray-100">${escape(item.text)}</div>`; },
+            item: function(item, escape) { return `<div class="text-red-600 p-1">${escape(item.text)}</div>`; }
+        },
+        dropdownClass: "bg-white rounded-md shadow-lg",
+        maxOptions: 100,
+        allowEmptyOption: true
+    });
+
+    // Select élève
+    new TomSelect("#selectEleve", {
+        valueField: "value",
+        labelField: "text",
+        searchField: ["text"],
+        render: {
+            option: function(item, escape) { return `<div class="text-gray-900 bg-white p-1 rounded-md hover:bg-gray-100">${escape(item.text)}</div>`; },
+            item: function(item, escape) { return `<div class="text-red-600 p-1">${escape(item.text)}</div>`; }
+        },
+        dropdownClass: "bg-white rounded-md shadow-lg",
+        maxOptions: 100
+    });
+});
+
+// Fonction pour pré-remplir les selects pour modifier une assignation
+function editAssignment(eleveId, userId) {
+    document.getElementById('selectEleve').tomselect.setValue(eleveId);
+    document.getElementById('selectUser').tomselect.setValue(userId);
+}
+</script>     
+{% endblock %}
+
+
+{% comment %} {% extends "base.html" %}
+{% load static %}
+{% block title %}Assigner Élève - {{ classe.nom }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-900 py-12 px-4 sm:px-6 lg:px-8 text-white">
+  <div class="max-w-4xl mx-auto bg-gray-800 rounded-lg shadow-lg p-8">
+
+    <h2 class="text-3xl font-bold text-center text-indigo-400 mb-8">
+      Assigner un élève à {{ classe.nom }}
+    </h2>
+
+    <!-- Formulaire assignation élève -->
+    <form method="POST" class="flex flex-col sm:flex-row gap-2 items-center mb-6">
+      {% csrf_token %}
+      
+      <!-- Sélection des élèves déjà existants dans la classe -->
+      <select name="eleve_id" id="selectEleve" class="w-full sm:w-1/3 rounded-md border-gray-300 text-red-600">
+        <option value="">-- Sélectionner un élève --</option>
+        {% for eleve in classe.eleves.all %}
+          <option value="{{ eleve.id }}">{{ eleve.nom }}</option>
+        {% endfor %}
+      </select>
+
+      <!-- Sélection d'un utilisateur existant -->
+      <select name="user_id" id="selectUser" class="w-full sm:w-1/3 rounded-md border-gray-300 text-red-600">
+        <option value="">-- Sélectionner un utilisateur --</option>
+        {% for user in users_actifs %}
+          <option value="{{ user.id }}">{{ user.get_full_name }} ({{ user.email }})</option>
+        {% endfor %}
+      </select>
+
+      <button type="submit"
+              class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md transition duration-300">
+        Assigner
+      </button>
+    </form>
+
+    <!-- Liste des élèves assignés -->
+    <div class="mt-6">
+      <h3 class="text-xl font-semibold text-green-400 mb-4">Élèves assignés</h3>
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-700">
+          <thead>
+            <tr class="bg-gray-700">
+              <th class="px-4 py-2 text-left text-sm font-medium text-white">Nom</th>
+              <th class="px-4 py-2 text-left text-sm font-medium text-white">Utilisateur</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-700">
+            {% for eleve in eleves %}
+            <tr>
+              <td class="px-4 py-2 text-red-600">{{ eleve.nom }}</td>
+              <td class="px-4 py-2 text-white">
+                {% if eleve.eleve %}
+                  {{ eleve.eleve.get_full_name }} ({{ eleve.eleve.email }})
+                {% else %}
+                  Aucun
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="2" class="px-4 py-2 text-gray-400">Aucun élève assigné</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TomSelect -->
+<link href="https://cdn.jsdelivr.net/npm/tom-select/dist/css/tom-select.bootstrap5.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // Select utilisateur
+    new TomSelect("#selectUser", {
+        valueField: "value",
+        labelField: "text",
+        searchField: ["text","email"],
+        render: {
+            option: function(item, escape) { return `<div class="text-gray-900 bg-white p-1 rounded-md hover:bg-gray-100">${escape(item.text)}</div>`; },
+            item: function(item, escape) { return `<div class="text-red-600 p-1">${escape(item.text)}</div>`; }
+        },
+        dropdownClass: "bg-white rounded-md shadow-lg",
+        maxOptions: 100,
+        allowEmptyOption: true
+    });
+
+    // Select élève
+    new TomSelect("#selectEleve", {
+        valueField: "value",
+        labelField: "text",
+        searchField: ["text"],
+        render: {
+            option: function(item, escape) { return `<div class="text-gray-900 bg-white p-1 rounded-md hover:bg-gray-100">${escape(item.text)}</div>`; },
+            item: function(item, escape) { return `<div class="text-red-600 p-1">${escape(item.text)}</div>`; }
+        },
+        dropdownClass: "bg-white rounded-md shadow-lg",
+        maxOptions: 100
+    });
+});
+</script>
+{% endblock %} {% endcomment %}

@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+{% load static tailwind_tags %}
+{% load static %}
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <title>{% block title %}School_Note_Drc{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/dist/styles.css' %}">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    {% comment %} <link rel="stylesheet" href="{% static 'css/style.css' %}"> {% endcomment %}
+    <link rel="icon" type="image/x-icon" href="{% static 'favicon_io/favicon.ico' %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'favicon_io/favicon-32x32.png' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'favicon_io/favicon-16x16.png' %}">
+    <link rel="manifest" href="{% static 'favicon_io/site.webmanifest' %}">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    {% tailwind_css %}
+</head>
+
+<body class="bg-gray-800 text-white">
+
+    <!-- Navbar -->
+    <nav class="bg-gray-900 p-4">
+        <div class="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
+            <div class="relative flex items-center justify-between h-16">
+                <!-- Mobile menu button -->
+                <div class="absolute inset-y-0 left-0 flex items-center sm:hidden">
+                    <button type="button" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white" aria-controls="mobile-menu" aria-expanded="false" id="mobile-menu-button">
+                        <span class="sr-only">Open main menu</span>
+                        <svg class="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Logo -->
+                <div class="flex-1 flex items-center justify-center sm:items-stretch sm:justify-start">
+                    <a href="{% url 'index' %}" class="text-white text-lg font-semibold">School_Note_Drc</a>
+                </div>
+
+                <!-- Desktop Menu -->
+                <div class="hidden sm:block sm:ml-6">
+                    <div class="flex space-x-4">
+                        {% if request.user.is_authenticated %}
+                        <div class="relative">
+                            <button class="text-white bg-gray-800 rounded-full px-4 py-2 text-sm font-medium" id="user-menu-button" aria-expanded="false">
+                                bonjour, {{ request.user.username }}
+                            </button>
+                            <div id="user-dropdown" class="dropdown-menu absolute hidden bg-gray-800 text-white rounded-md shadow-lg z-10">
+                                <a href="{% url 'profile' %}" class="block px-4 py-2 text-sm">Profile</a>
+                                {% if user.is_staff %}
+    <a href="{% url 'school_list' %}" 
+    class="block px-4 py-2 text-sm">
+       Liste des écoles
+    </a>
+{% endif %}
+                                <a href="#" id="logout-desktop" class="block px-4 py-2 text-sm">Logout</a>
+                            </div>
+                        </div>
+                        {% else %}
+                        <a href="{% url 'signup' %}" class="text-white btn btn-outline-light px-4 py-2 rounded-md text-sm font-medium">
+                            Inscription
+                        </a>
+                        <a href="{% url 'signin' %}" class="text-white btn btn-outline-light px-4 py-2 rounded-md text-sm font-medium">
+                            Connexions
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu -->
+    <div class="sm:hidden hidden" id="mobile-menu">
+        <div class="px-2 pt-2 pb-3 space-y-1">
+            <a href="{% url 'index' %}" class="text-white block px-3 py-2 rounded-md text-base font-medium">Accueil</a>
+            {% if request.user.is_authenticated %}
+            <a href="{% url 'profile' %}" class="text-white block px-3 py-2 rounded-md text-base font-medium">Profile</a>
+            {% if user.is_staff %}
+    <a href="{% url 'school_list' %}" 
+       class="text-white block px-3 py-2 rounded-md text-base font-medium">
+       Liste des écoles
+    </a>
+{% endif %}
+
+            <a href="#" id="logout-mobile" class="text-white block px-3 py-2 rounded-md text-base font-medium">Logout</a>
+            {% else %}
+            <a href="{% url 'signup' %}" class="text-white block px-3 py-2 rounded-md text-base font-medium">Inscription</a>
+            <a href="{% url 'signin' %}" class="text-white block px-3 py-2 rounded-md text-base font-medium">Connexions</a>
+            {% endif %}
+        </div>
+    </div>
+
+    {% for message in messages %}
+<div class="flex justify-center">
+    <div class="w-full max-w-lg mt-4 p-4 
+        {% if message.tags == 'error' %} bg-red-500 {% else %} bg-green-500 {% endif %}
+        text-white rounded-md shadow-md">
+        <div class="flex items-center">
+            {% if message.tags == 'error' %}
+                <!-- Error icon -->
+                <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 4v.01m6.938-8.938a9.003 9.003 0 11-12.876 12.876 9.003 9.003 0 0112.876-12.876z" />
+                </svg>
+            {% else %}
+                <!-- Success icon -->
+                <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+            {% endif %}
+            <span>{{ message }}</span>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+    {% block content %}
+    
+    {% endblock %}
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white py-4">
+        <div class="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center">
+                <div class="text-sm">
+                    <p>&copy; 2026 School_Note.</p>
+                </div>
+                <div class="space-x-4">
+                    
+                    <a href="{% url 'apropos' %}" class="text-gray-400 hover:text-white">Apropos de nous </a>
+                    <a href="{% url 'contact' %}" class="text-gray-400 hover:text-white">Contact</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    {% comment %} <script>
+        // Dropdown desktop
+        document.getElementById('user-menu-button').addEventListener('click', function() {
+            document.getElementById('user-dropdown').classList.toggle('hidden');
+        });
+
+        // Mobile menu toggle
+        document.getElementById('mobile-menu-button').addEventListener('click', function() {
+            document.getElementById('mobile-menu').classList.toggle('hidden');
+        });
+
+        // Logout confirmation for desktop
+        document.getElementById('logout-desktop')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            Swal.fire({
+                title: 'Se déconnecter ?',
+                text: "Voulez-vous vraiment vous déconnecter ?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Oui, logout',
+                cancelButtonText: 'Annuler'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = "{% url 'signout' %}";
+                }
+            });
+        });
+
+        // Logout confirmation for mobile
+        document.getElementById('logout-mobile')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            Swal.fire({
+                title: 'Se déconnecter ?',
+                text: "Voulez-vous vraiment vous déconnecter ?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Oui, logout',
+                cancelButtonText: 'Annuler'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = "{% url 'signout' %}";
+                }
+            });
+        });
+    </script> {% endcomment %}
+        <!-- Scripts -->
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                // --- Desktop Dropdown ---
+                const userMenuButton = document.getElementById('user-menu-button');
+                const userDropdown = document.getElementById('user-dropdown');
+    
+                if (userMenuButton && userDropdown) {
+                    userMenuButton.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        userDropdown.classList.toggle('hidden');
+                    });
+    
+                    // Ferme le menu si on clique ailleurs
+                    document.addEventListener('click', function(e) {
+                        if (!userDropdown.contains(e.target) && e.target !== userMenuButton) {
+                            userDropdown.classList.add('hidden');
+                        }
+                    });
+                }
+    
+                // --- Mobile Menu Toggle ---
+                const mobileMenuButton = document.getElementById('mobile-menu-button');
+                const mobileMenu = document.getElementById('mobile-menu');
+                if (mobileMenuButton && mobileMenu) {
+                    mobileMenuButton.addEventListener('click', function() {
+                        mobileMenu.classList.toggle('hidden');
+                    });
+                }
+    
+                // --- Logout (Desktop) ---
+                const logoutDesktop = document.getElementById('logout-desktop');
+                if (logoutDesktop) {
+                    logoutDesktop.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        Swal.fire({
+                            title: 'Se déconnecter ?',
+                            text: "Voulez-vous vraiment vous déconnecter ?",
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonColor: '#dc2626',
+                            cancelButtonColor: '#6b7280',
+                            confirmButtonText: 'Oui, logout',
+                            cancelButtonText: 'Annuler'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                window.location.href = "{% url 'signout' %}";
+                            }
+                        });
+                    });
+                }
+    
+                // --- Logout (Mobile) ---
+                const logoutMobile = document.getElementById('logout-mobile');
+                if (logoutMobile) {
+                    logoutMobile.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        Swal.fire({
+                            title: 'Se déconnecter ?',
+                            text: "Voulez-vous vraiment vous déconnecter ?",
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonColor: '#dc2626',
+                            cancelButtonColor: '#6b7280',
+                            confirmButtonText: 'Oui, logout',
+                            cancelButtonText: 'Annuler'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                // Ferme le menu mobile proprement avant de rediriger
+                                mobileMenu.classList.add('hidden');
+                                window.location.href = "{% url 'signout' %}";
+                            }
+                        });
+                    });
+                }
+            });
+        </script>
+    
+
+</body>
+</html>
+
+
+{% comment %} <!DOCTYPE html>
+{% load static %}
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}School_Note{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+
+<body class="bg-gray-800 text-white">
+
+    <!-- Navbar -->
+    <nav class="bg-gray-900 p-4">
+        <div class="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
+            <div class="relative flex items-center justify-between h-16">
+                <div class="absolute inset-y-0 left-0 flex items-center sm:hidden">
+                    <button type="button" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white" aria-controls="mobile-menu" aria-expanded="false">
+                        <span class="sr-only">Open main menu</span>
+                        <svg class="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div class="flex-1 flex items-center justify-center sm:items-stretch sm:justify-start">
+                    <a href="{% url 'index' %}" class="text-white text-lg font-semibold">
+                        EcoleNom
+                    </a>
+                </div>
+                <div class="hidden sm:block sm:ml-6">
+                    <div class="flex space-x-4">
+                        {% if request.user.is_authenticated %}
+                            <div class="relative">
+                                <button class="text-white bg-gray-800 rounded-full px-4 py-2 text-sm font-medium" id="user-menu-button" aria-expanded="false" data-dropdown-toggle="user-dropdown">
+                                    bonjour, {{ request.user.username }}
+                                </button>
+                                <div id="user-dropdown" class="dropdown-menu absolute hidden bg-gray-800 text-white rounded-md shadow-lg z-10">
+                                    <a href="{% url 'profile' %}" class="block px-4 py-2 text-sm">Profile</a>
+                                    
+                                    <a href="{% url 'signout' %}" class="block px-4 py-2 text-sm">Logout</a>
+                                </div>
+                            </div>
+                        {% else %}
+                            <a href="{% url 'signup' %}" class="text-white btn btn-outline-light px-4 py-2 rounded-md text-sm font-medium">
+                                Sign Up
+                            </a>
+                            <a href="{% url 'signin' %}" class="text-white btn btn-outline-light px-4 py-2 rounded-md text-sm font-medium">
+                                Login
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu -->
+    <div class="sm:hidden" id="mobile-menu" class="hidden">
+        <div class="px-2 pt-2 pb-3 space-y-1">
+            <a href="{% url 'index' %}" class="text-white block px-3 py-2 rounded-md text-base font-medium">Accueil</a>
+            {% if request.user.is_authenticated %}
+                <a href="{% url 'profile' %}" class="text-white block px-3 py-2 rounded-md text-base font-medium">Profile</a>
+                <a href="{% url 'signout' %}" class="text-white block px-3 py-2 rounded-md text-base font-medium">Logout</a>
+            {% else %}
+                <a href="{% url 'signup' %}" class="text-white block px-3 py-2 rounded-md text-base font-medium">Sign Up</a>
+                <a href="{% url 'signin' %}" class="text-white block px-3 py-2 rounded-md text-base font-medium">Login</a>
+            {% endif %}
+        </div>
+    </div>
+
+    {% for message in messages %}
+    <div class="flex justify-center">
+        <div class="w-full max-w-lg mt-4 p-4 
+            {% if message.tags == 'error' %}
+                bg-red-500
+            {% else %}
+                bg-green-500
+            {% endif %}
+            text-white rounded-md shadow-md">
+            <div class="flex items-center">
+                {% if message.tags == 'error' %}
+                    <!-- Error icon -->
+                    <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 4v.01m6.938-8.938a9.003 9.003 0 11-12.876 12.876 9.003 9.003 0 0112.876-12.876z" />
+                    </svg>
+                {% else %}
+                    <!-- Success icon -->
+                    <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                {% endif %}
+                <span>{{ message }}</span>
+            </div>
+        </div>
+    </div>
+{% endfor %}
+
+
+
+    <!-- Content Section -->
+    
+        {% block content %}
+        <!-- Content will be injected here -->
+        {% endblock %}
+
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white py-4">
+        <div class="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center">
+                <div class="text-sm">
+                    <p>&copy; 2024 DevDrive. All rights reserved.</p>
+                </div>
+                <div class="space-x-4">
+                    <a href="#" class="text-gray-400 hover:text-white">Privacy Policy</a>
+                    <a href="#" class="text-gray-400 hover:text-white">Terms of Service</a>
+                    <a href="#" class="text-gray-400 hover:text-white">Contact Us</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Script for Dropdown -->
+    <script>
+        document.getElementById('user-menu-button').addEventListener('click', function() {
+            document.getElementById('user-dropdown').classList.toggle('hidden');
+        });
+    </script>
+
+    <!-- Mobile Menu Toggle -->
+    <script>
+        const menuButton = document.querySelector('button[aria-controls="mobile-menu"]');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        menuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+    </script>
+
+</body>
+
+</html> {% endcomment %}

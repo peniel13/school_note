@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% load static %}
+{% load custom_tags %}
+{% block title %}Situations de l'Élève{% endblock %}
+
+{% block content %}
+<div class="bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+    <!-- Titre principal -->
+    <h1 class="text-4xl font-semibold text-white text-center mb-8">Situations de l'Élève : {{ eleve.nom }} {{ eleve.prenom }}</h1>
+    
+    <!-- Informations de l'élève -->
+    <header class="mb-8">
+        <h2 class="text-2xl font-semibold text-white">Classe : {{ eleve.classe.nom }}</h2>
+        <h3 class="text-xl text-gray-300">Élève : {{ eleve.nom }} {{ eleve.prenom }}</h3>
+    </header>
+
+    <!-- Tableau des notations -->
+    <div class="overflow-x-auto bg-gray-800 rounded-lg shadow-lg p-6">
+        <table class="min-w-full table-auto text-sm text-left text-gray-300">
+            <thead class="text-xs uppercase text-gray-500 bg-gray-700">
+                <tr>
+                    <th class="px-4 py-2">Matières</th>
+                    {% for periode in periodes %}
+                        <th class="px-4 py-2 text-center" colspan="2">{{ periode.nom }}</th>
+                    {% endfor %}
+                    <th class="px-4 py-2 text-center" colspan="2">Total</th>
+                </tr>
+                <tr>
+                    <th class="px-4 py-2"></th>
+                    {% for periode in periodes %}
+                        <th class="px-4 py-2 text-center">Note Obtenue</th>
+                        <th class="px-4 py-2 text-center">Note Attendue</th>
+                    {% endfor %}
+                    <th class="px-4 py-2 text-center">Total Obtenu</th>
+                    <th class="px-4 py-2 text-center">Total Attendu</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for matiere in matieres %}
+                    <tr class="border-t border-gray-600">
+                        <td class="px-4 py-2">{{ matiere.nom }}</td>
+                        {% for periode in periodes %}
+                            <td class="px-4 py-2 text-center">
+                                {% with notation=notations_par_matiere|get_item:matiere|get_item:periode %}
+                                    {% if notation %}
+                                        {{ notation.note_obtenue }}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                {% endwith %}
+                            </td>
+                            <td class="px-4 py-2 text-center">
+                                {% with notation=notations_par_matiere|get_item:matiere|get_item:periode %}
+                                    {% if notation %}
+                                        {{ notation.note_attendue }}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                {% endwith %}
+                            </td>
+                        {% endfor %}
+                        <td class="px-4 py-2 text-center">{{ notations_par_matiere|get_item:matiere|sum_by_key:"note_obtenue" }}</td>
+                        <td class="px-4 py-2 text-center">{{ notations_par_matiere|get_item:matiere|sum_by_key:"note_attendue" }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot class="bg-gray-700">
+                <tr>
+                    <td class="px-4 py-2 text-center font-semibold">Total par période</td>
+                    {% for periode in periodes %}
+                        <td class="px-4 py-2 text-center">
+                            <strong>{{ total_periode_obtenu|get_item:periode }}</strong>
+                        </td>
+                        <td class="px-4 py-2 text-center">
+                            <strong>{{ total_periode_attendu|get_item:periode }}</strong>
+                        </td>
+                    {% endfor %}
+                    <td class="px-4 py-2 text-center">
+                        <strong>{{ total_obtenu }}</strong>
+                    </td>
+                    <td class="px-4 py-2 text-center">
+                        <strong>{{ total_attendu }}</strong>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="px-4 py-2 text-center font-semibold">Pourcentage Obtenu</td>
+                    {% for periode in periodes %}
+                        <td class="px-4 py-2 text-center">
+                            <strong>{{ pourcentage_periode|get_item:periode|floatformat:2 }}%</strong>
+                        </td>
+                        <td class="px-4 py-2 text-center">
+                            <!-- On laisse vide pour la note attendue -->
+                        </td>
+                    {% endfor %}
+                    <td class="px-4 py-2 text-center">
+                        <strong>{{ pourcentage_total|floatformat:2 }}%</strong>
+                    </td>
+                    <td class="px-4 py-2 text-center">
+                        <!-- Vide -->
+                    </td>
+                </tr>
+            </tfoot>
+            
+        </table>
+    </div>
+
+    <!-- Footer avec les totaux -->
+    <footer class="mt-8 text-center">
+        <h3 class="text-xl font-semibold text-white mb-4">Total des notes :</h3>
+        <p class="text-lg text-gray-300">Note Obtenue : {{ total_obtenu }}</p>
+        <p class="text-lg text-gray-300">Note Attendue : {{ total_attendu }}</p>
+    </footer>
+
+    <!-- Lien pour télécharger le rapport Excel -->
+    <div class="mt-6 text-center">
+        <a href="" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition duration-200">
+            Télécharger le rapport PDF
+        </a>
+    </div> 
+    <div class="mt-6 text-center">
+        <!-- Bouton pour télécharger le rapport Word -->
+        <a href="" 
+           class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition duration-200">
+            Télécharger le rapport Word
+        </a>
+    </div>
+    <div class="mt-6 text-center">
+        <a href="" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition duration-200">
+            Télécharger le rapport Excel
+        </a>
+    </div>
+
+</div>
+{% endblock %} 

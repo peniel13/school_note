@@ -1,0 +1,422 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+
+{% block title %}Infos École{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto py-8">
+    <h2 class="text-3xl font-bold mb-6 text-center text-white">{{ school.nom }}</h2>
+
+    {% if info_school %}
+        <!-- Affichage des infos existantes -->
+        <h3 class="text-xl font-semibold mb-4 text-white text-center mx-auto">Informations pour l'année {{ school.annee_scolaire }}</h3>
+        <div class="bg-gray-800 p-6 rounded-lg text-white mb-6 space-y-4">
+            
+            <!-- Texte modifiable -->
+            <p><strong>Présentation :</strong> {{ info_school.presentation|default:"-" }}
+                <a href="#" onclick="showEdit()" class="text-yellow-400 ml-2 text-sm">Modifier</a>
+            </p>
+            <p><strong>Mission :</strong> {{ info_school.mission|default:"-" }}
+                <a href="#" onclick="showEdit()" class="text-yellow-400 ml-2 text-sm">Modifier</a>
+            </p>
+            <p><strong>Valeurs :</strong> {{ info_school.valeurs|default:"-" }}
+                <a href="#" onclick="showEdit()" class="text-yellow-400 ml-2 text-sm">Modifier</a>
+            </p>
+            <p><strong>Slogan :</strong> {{ info_school.slogan|default:"-" }}
+                <a href="#" onclick="showEdit()" class="text-yellow-400 ml-2 text-sm">Modifier</a>
+            </p>
+            <p><strong>Remerciements :</strong> {{ info_school.remerciements|default:"-" }}
+                <a href="#" onclick="showEdit()" class="text-yellow-400 ml-2 text-sm">Modifier</a>
+            </p>
+
+            <!-- Images principales -->
+            <div class="mt-4 flex gap-6">
+                <div>
+                    <p class="font-semibold">Logo :</p>
+                    {% if info_school.logo %}
+                        <img src="{{ info_school.logo.url }}" class="w-32 h-32 object-cover rounded mb-1">
+                    {% else %}
+                        <p class="text-gray-400">Aucun logo</p>
+                    {% endif %}
+                    <a href="#" onclick="showEdit()" class="text-yellow-400 text-sm">Modifier</a>
+                </div>
+                <div>
+                    <p class="font-semibold">Image principale :</p>
+                    {% if info_school.image_principale %}
+                        <img src="{{ info_school.image_principale.url }}" class="w-32 h-32 object-cover rounded mb-1">
+                    {% else %}
+                        <p class="text-gray-400">Aucune image</p>
+                    {% endif %}
+                    <a href="#" onclick="showEdit()" class="text-yellow-400 text-sm">Modifier</a>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Galerie photos -->
+        {% if info_school.photos.exists %}
+        <h3 class="text-lg font-semibold mb-2 text-white">Galerie</h3>
+        <div class="grid grid-cols-3 gap-4 mb-6">
+            {% for photo in info_school.photos.all %}
+            <div>
+                <img src="{{ photo.image.url }}" class="w-full h-32 object-cover rounded">
+                {% if photo.caption %}<p class="text-white text-sm mt-1">{{ photo.caption }}</p>{% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+    {% endif %}
+
+    <!-- Formulaire création / modification -->
+    <div id="editForm" class="bg-gray-700 p-6 rounded-lg mb-6 {% if info_school %}hidden{% endif %} space-y-6">
+        <h3 class="text-xl font-semibold text-yellow-400 mb-4">
+            {% if info_school %}Modifier les informations{% else %}Créer les informations{% endif %}
+        </h3>
+
+        <form method="POST" enctype="multipart/form-data" class="space-y-6">
+            {% csrf_token %}
+
+            <!-- Textes avec fond sombre et texte blanc -->
+            <div>
+                {{ form.presentation.label_tag }}
+                {{ form.presentation|add_class:"w-full px-4 py-2 mt-2 rounded-md bg-gray-900 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" }}
+            </div>
+            <div>
+                {{ form.mission.label_tag }}
+                {{ form.mission|add_class:"w-full px-4 py-2 mt-2 rounded-md bg-gray-900 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" }}
+            </div>
+            <div>
+                {{ form.valeurs.label_tag }}
+                {{ form.valeurs|add_class:"w-full px-4 py-2 mt-2 rounded-md bg-gray-900 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" }}
+            </div>
+            <div>
+                {{ form.slogan.label_tag }}
+                {{ form.slogan|add_class:"w-full px-4 py-2 mt-2 rounded-md bg-gray-900 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" }}
+            </div>
+            <div>
+                {{ form.remerciements.label_tag }}
+                {{ form.remerciements|add_class:"w-full px-4 py-2 mt-2 rounded-md bg-gray-900 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" }}
+            </div>
+
+            <!-- Images principales -->
+            <div>
+                <label class="block text-sm font-medium text-white">Logo</label>
+                {% if info_school and info_school.logo %}
+                    <img src="{{ info_school.logo.url }}" class="w-32 h-32 object-cover rounded mb-1">
+                {% endif %}
+                {{ form.logo|add_class:"w-full mt-2" }}
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-white">Image principale</label>
+                {% if info_school and info_school.image_principale %}
+                    <img src="{{ info_school.image_principale.url }}" class="w-32 h-32 object-cover rounded mb-1">
+                {% endif %}
+                {{ form.image_principale|add_class:"w-full mt-2" }}
+            </div>
+
+            <!-- Galerie formset -->
+            {{ formset.management_form }}
+            {% for f in formset %}
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-white">Photo</label>
+                    {{ f.image|add_class:"w-full mt-1" }}
+                    {{ f.caption|add_class:"w-full mt-1" }}
+                    {% if f.instance.pk %}
+                        <div class="flex items-center mt-1">
+                            {{ f.DELETE }} <label class="text-white text-sm ml-1">Supprimer</label>
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+
+            <!-- Bouton soumission -->
+            <div>
+                <button type="submit"
+                        class="w-full bg-yellow-500 hover:bg-yellow-600 text-white py-2 rounded-md text-sm font-medium">
+                    {% if info_school %}Enregistrer{% else %}Créer{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+
+    {% if info_school %}
+    <div class="text-center mb-6">
+        <button onclick="showEdit()" class="bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-4 rounded-md">
+            Modifier les infos
+        </button>
+    </div>
+    {% endif %}
+
+</div>
+
+<script>
+function showEdit() {
+    document.getElementById('editForm').classList.remove('hidden');
+    document.getElementById('editForm').scrollIntoView({behavior: "smooth"});
+}
+</script>
+{% endblock %}
+
+
+
+{% comment %} {% extends "base.html" %}
+{% block title %}Infos École{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto py-8">
+    <h2 class="text-3xl font-bold mb-6 text-center">{{ school.nom }}</h2>
+
+    {% if info_school %}
+        <!-- Affichage des infos existantes -->
+        <h3 class="text-xl font-semibold mb-4">Informations pour l'année {{ school.annee_scolaire }}</h3>
+        <div class="bg-gray-800 p-6 rounded-lg text-white mb-6 space-y-4">
+
+            <!-- Texte modifiable -->
+            <p><strong>Présentation :</strong> {{ info_school.presentation|default:"-" }}
+                <a href="#" onclick="showEdit()" class="text-yellow-400 ml-2 text-sm">Modifier</a>
+            </p>
+            <p><strong>Mission :</strong> {{ info_school.mission|default:"-" }}
+                <a href="#" onclick="showEdit()" class="text-yellow-400 ml-2 text-sm">Modifier</a>
+            </p>
+            <p><strong>Valeurs :</strong> {{ info_school.valeurs|default:"-" }}
+                <a href="#" onclick="showEdit()" class="text-yellow-400 ml-2 text-sm">Modifier</a>
+            </p>
+            <p><strong>Slogan :</strong> {{ info_school.slogan|default:"-" }}
+                <a href="#" onclick="showEdit()" class="text-yellow-400 ml-2 text-sm">Modifier</a>
+            </p>
+            <p><strong>Remerciements :</strong> {{ info_school.remerciements|default:"-" }}
+                <a href="#" onclick="showEdit()" class="text-yellow-400 ml-2 text-sm">Modifier</a>
+            </p>
+
+            <!-- Images principales -->
+            <div class="mt-4 flex gap-6">
+                <div>
+                    <p class="font-semibold">Logo :</p>
+                    {% if info_school.logo %}
+                        <img src="{{ info_school.logo.url }}" class="w-32 h-32 object-cover rounded mb-1">
+                    {% else %}
+                        <p class="text-gray-400">Aucun logo</p>
+                    {% endif %}
+                    <a href="#" onclick="showEdit()" class="text-yellow-400 text-sm">Modifier</a>
+                </div>
+                <div>
+                    <p class="font-semibold">Image principale :</p>
+                    {% if info_school.image_principale %}
+                        <img src="{{ info_school.image_principale.url }}" class="w-32 h-32 object-cover rounded mb-1">
+                    {% else %}
+                        <p class="text-gray-400">Aucune image</p>
+                    {% endif %}
+                    <a href="#" onclick="showEdit()" class="text-yellow-400 text-sm">Modifier</a>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Galerie photos -->
+        {% if info_school.photos.exists %}
+        <h3 class="text-lg font-semibold mb-2 text-white">Galerie</h3>
+        <div class="grid grid-cols-3 gap-4 mb-6">
+            {% for photo in info_school.photos.all %}
+            <div>
+                <img src="{{ photo.image.url }}" class="w-full h-32 object-cover rounded">
+                {% if photo.caption %}<p class="text-white text-sm mt-1">{{ photo.caption }}</p>{% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+    {% endif %}
+
+    <!-- Formulaire création / modification -->
+    <div id="editForm" class="bg-gray-700 p-6 rounded-lg mb-6 {% if info_school %}hidden{% endif %} space-y-6">
+        <h3 class="text-xl font-semibold text-yellow-400 mb-4">
+            {% if info_school %}Modifier les informations{% else %}Créer les informations{% endif %}
+        </h3>
+
+        <form method="POST" enctype="multipart/form-data" class="space-y-6">
+            {% csrf_token %}
+
+            <!-- Textes -->
+            <div>
+                {{ form.presentation.label_tag }} {{ form.presentation }}
+            </div>
+            <div>
+                {{ form.mission.label_tag }} {{ form.mission }}
+            </div>
+            <div>
+                {{ form.valeurs.label_tag }} {{ form.valeurs }}
+            </div>
+            <div>
+                {{ form.slogan.label_tag }} {{ form.slogan }}
+            </div>
+            <div>
+                {{ form.remerciements.label_tag }} {{ form.remerciements }}
+            </div>
+
+            <!-- Images principales -->
+            <div>
+                <label class="block text-sm font-medium text-white">Logo</label>
+                {% if info_school and info_school.logo %}
+                    <img src="{{ info_school.logo.url }}" class="w-32 h-32 object-cover rounded mb-1">
+                {% endif %}
+                {{ form.logo }}
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-white">Image principale</label>
+                {% if info_school and info_school.image_principale %}
+                    <img src="{{ info_school.image_principale.url }}" class="w-32 h-32 object-cover rounded mb-1">
+                {% endif %}
+                {{ form.image_principale }}
+            </div>
+
+            <!-- Galerie formset -->
+            {{ formset.management_form }}
+            {% for f in formset %}
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-white">Photo</label>
+                    {{ f.image }} {{ f.caption }}
+                    {% if f.instance.pk %}
+                        <div class="flex items-center mt-1">
+                            {{ f.DELETE }} <label class="text-white text-sm ml-1">Supprimer</label>
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+
+            <!-- Bouton soumission -->
+            <div>
+                <button type="submit"
+                        class="w-full bg-yellow-500 hover:bg-yellow-600 text-white py-2 rounded-md text-sm font-medium">
+                    {% if info_school %}Enregistrer{% else %}Créer{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Bouton pour afficher le formulaire si info existante -->
+    {% if info_school %}
+    <div class="text-center mb-6">
+        <button onclick="showEdit()" class="bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-4 rounded-md">
+            Modifier les infos
+        </button>
+    </div>
+    {% endif %}
+
+</div>
+
+<script>
+function showEdit() {
+    document.getElementById('editForm').classList.remove('hidden');
+    document.getElementById('editForm').scrollIntoView({behavior: "smooth"});
+}
+</script>
+{% endblock %} {% endcomment %}
+
+
+
+{% comment %} {% extends "base.html" %}
+{% block title %}Infos École{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto py-8">
+    <h2 class="text-3xl font-bold mb-6 text-center">{{ school.nom }}</h2>
+
+    {% if info_school %}
+        <h3 class="text-xl font-semibold mb-4">Informations pour l'année {{ school.annee_scolaire }}</h3>
+        <div class="bg-gray-800 p-6 rounded-lg text-white mb-6">
+
+            <!-- Texte modifiable -->
+            <p><strong>Présentation :</strong> {{ info_school.presentation|default:"-" }}
+                <a href="#" onclick="showEdit('presentation')" class="text-yellow-400 ml-2">Modifier</a>
+            </p>
+            <p><strong>Mission :</strong> {{ info_school.mission|default:"-" }}
+                <a href="#" onclick="showEdit('mission')" class="text-yellow-400 ml-2">Modifier</a>
+            </p>
+            <p><strong>Valeurs :</strong> {{ info_school.valeurs|default:"-" }}
+                <a href="#" onclick="showEdit('valeurs')" class="text-yellow-400 ml-2">Modifier</a>
+            </p>
+            <p><strong>Slogan :</strong> {{ info_school.slogan|default:"-" }}
+                <a href="#" onclick="showEdit('slogan')" class="text-yellow-400 ml-2">Modifier</a>
+            </p>
+            <p><strong>Remerciements :</strong> {{ info_school.remerciements|default:"-" }}
+                <a href="#" onclick="showEdit('remerciements')" class="text-yellow-400 ml-2">Modifier</a>
+            </p>
+
+            <!-- Images principales -->
+            <div class="mt-4 flex gap-6">
+                <div>
+                    <p class="font-semibold">Logo :</p>
+                    {% if info_school.logo %}
+                        <img src="{{ info_school.logo.url }}" class="w-32 h-32 object-cover rounded mb-1">
+                    {% else %}
+                        <p class="text-gray-400">Aucun logo</p>
+                    {% endif %}
+                    <a href="#" onclick="showEdit('logo')" class="text-yellow-400 text-sm">Modifier</a>
+                </div>
+                <div>
+                    <p class="font-semibold">Image principale :</p>
+                    {% if info_school.image_principale %}
+                        <img src="{{ info_school.image_principale.url }}" class="w-32 h-32 object-cover rounded mb-1">
+                    {% else %}
+                        <p class="text-gray-400">Aucune image</p>
+                    {% endif %}
+                    <a href="#" onclick="showEdit('image_principale')" class="text-yellow-400 text-sm">Modifier</a>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Galerie -->
+        <div class="grid grid-cols-3 gap-4 mb-6">
+            {% for photo in info_school.photos.all %}
+            <div>
+                <img src="{{ photo.image.url }}" class="w-full h-32 object-cover rounded">
+                {% if photo.caption %}<p class="text-white text-sm mt-1">{{ photo.caption }}</p>{% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Formulaire caché pour modification inline -->
+        <div id="editForm" class="hidden bg-gray-700 p-6 rounded-lg mb-6">
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ form.as_p }}
+                {{ formset.management_form }}
+                {% for f in formset %}
+                    {{ f.as_p }}
+                {% endfor %}
+                <button type="submit" class="bg-yellow-600 px-4 py-2 rounded text-white">Enregistrer</button>
+            </form>
+        </div>
+
+    {% else %}
+        <!-- Formulaire de création -->
+        <div class="bg-gray-700 p-6 rounded-lg">
+            <h3 class="text-xl font-semibold text-yellow-400 mb-4">Créer les informations de l'école</h3>
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ form.as_p }}
+                {{ formset.management_form }}
+                {% for f in formset %}
+                    {{ f.as_p }}
+                {% endfor %}
+                <button type="submit" class="bg-yellow-600 px-4 py-2 rounded text-white">Créer</button>
+            </form>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+function showEdit(field) {
+    document.getElementById('editForm').classList.remove('hidden');
+    const input = document.getElementById('id_' + field);
+    if(input) {
+        input.scrollIntoView({behavior: "smooth"});
+        input.focus();
+    }
+}
+</script>
+{% endblock %} {% endcomment %}

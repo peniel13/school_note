@@ -1,0 +1,175 @@
+{# templates/core/bulletin_pdf_dynamic.html #}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Bulletin de {{ eleve.nom }}</title>
+<style>
+  @page { size: A4; margin: 15mm; }
+  body { font-family: "Times New Roman", serif; margin: 0; padding: 0; background: #fff; }
+  .bulletin { width: 100%; max-width: 900px; margin: auto; border: 1px solid #000; padding: 6px; }
+  table { width: 100%; border-collapse: collapse; font-size: 11px; text-align: center; }
+  th, td { border: 1px solid #000; padding: 3px; }
+  .header-table td { border: none; font-size: 11px; }
+  .title { text-align: center; font-size: 13px; font-weight: bold; text-transform: uppercase; }
+  .section-title { font-weight: bold; text-align: left; background: #f0f0f0; }
+  .left { text-align: left; padding-left: 6px; }
+  .small { font-size: 10px; }
+  .signature-section { display:flex; justify-content:space-between; margin-top:14px; }
+  .signature-box { width:30%; text-align:center; }
+  .note { font-size: 10px; margin-top: 12px; }
+</style>
+</head>
+<body>
+<div class="bulletin">
+  <!-- En-tête -->
+  <table class="header-table" role="presentation">
+    <tr>
+      <td style="width:70px;">
+        <!-- placeholder flag left -->
+      </td>
+      <td colspan="5" class="title">REPUBLIQUE DEMOCRATIQUE DU CONGO</td>
+      <td style="width:70px;"></td>
+    </tr>
+    <tr>
+      <td colspan="7" class="title">MINISTERE DE L’ENSEIGNEMENT PRIMAIRE SECONDAIRE ET INITIATION A LA NOUVELLE CITOYENNETÉ</td>
+    </tr>
+    <tr>
+      <td colspan="7" style="text-align:center;">N° ID : <span style="border:1px solid #000; padding:2px 30px;"></span></td>
+    </tr>
+  </table>
+
+  <table role="presentation" style="margin-top:6px;">
+    <tr><td colspan="7" class="section-title left">PROVINCE : {{ school.nom if school else "" }}</td></tr>
+  </table>
+
+  <table role="presentation" style="margin-top:6px; font-size:11px;">
+    <tr>
+      <td class="left">ECOLE : {{ school.nom }}</td>
+      <td class="left">ELEVE : {{ eleve.nom }} &nbsp; SEXE : </td>
+    </tr>
+    <tr>
+      <td class="left">VILLE : </td>
+      <td class="left">NE(E) A : &nbsp; LE : </td>
+    </tr>
+    <tr>
+      <td class="left">COMMUNE : </td>
+      <td class="left">CLASSE : {{ classe.nom }}</td>
+    </tr>
+    <tr>
+      <td class="left">CODE : </td>
+      <td class="left">N° PERM. : </td>
+    </tr>
+  </table>
+
+  <div style="text-align:center; font-weight:bold; margin:8px 0; font-size:12px;">
+    BULLETIN — ANNÉE SCOLAIRE {{ school.annee_scolaire }}
+  </div>
+
+  <!-- Tableau principal -->
+  <table>
+    <thead>
+      <tr>
+        <th rowspan="3">BRANCHES</th>
+        {% for p in periods %}
+          {# pour lisibilité on affichera le nom de la période dans une colonne ; on garde la logique "plus un Tot par semestre" en affichant toutes les périodes ici #}
+          <th>{{ p.nom }}</th>
+        {% endfor %}
+        <th>TOT</th>
+        <th>TG</th> {# TG (Total Général) : colonne pour total général si besoin (une seule) #}
+        <th>EX. REP.</th>
+        <th>% / SIGN. PROF</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      {# Boucle sur chaque maxima (ligne d'entête de bloc) puis ses matières #}
+      {% for bloc in tableau %}
+        <tr>
+          <td class="section-title left">MAXIMA ({{ bloc.maxima.note_attendue }})</td>
+
+          {# pour chaque période : affiche note_attendue si maxima concerne la période sinon '-' #}
+          {% for i in bloc.maxima_cells %}
+            <td>{% if i %}{{ i }}{% else %}-{% endif %}</td>
+          {% endfor %}
+
+          <td>{{ bloc.tot_maxima_line }}</td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+
+        {# lignes matières du bloc #}
+        {% for row in bloc.matieres %}
+          <tr>
+            <td class="left">{{ row.matiere.nom }}</td>
+            {% for val in row.cells %}
+              <td>{{ val }}</td>
+            {% endfor %}
+            <td>{{ row.total }}</td>
+            <td></td>
+            <td></td>
+            <td></td>
+          </tr>
+        {% endfor %}
+      {% endfor %}
+
+      {# MAXIMA GÉNÉRAUX : totaux attendus par période #}
+      <tr>
+        <td class="section-title left">MAXIMA GÉNÉRAUX</td>
+        {% for p in periods %}
+          <td>{{ tot_attendu_par_period|get_item:p }}</td>
+        {% endfor %}
+        <td>{{ total_attendu_global }}</td>
+        <td></td>
+        <td></td>
+        <td></td>
+      </tr>
+
+      {# TOTAUX ÉLÈVE (obtenus) par période #}
+      <tr>
+        <td class="section-title left">TOTAUX OBTENUS</td>
+        {% for p in periods %}
+          <td>{{ tot_obtenu_par_period|get_item:p }}</td>
+        {% endfor %}
+        <td>{{ total_obtenu_global }}</td>
+        <td></td>
+        <td></td>
+        <td></td>
+      </tr>
+
+      {# POURCENTAGE par période #}
+      <tr>
+        <td class="section-title left">POURCENTAGE (%)</td>
+        {% for p in periods %}
+          <td>
+            {% with pct=pourcentage_par_period|get_item:p %}
+              {{ pct }}%
+            {% endwith %}
+          </td>
+        {% endfor %}
+        <td>{{ pourcentage_global }}%</td>
+        <td></td>
+        <td></td>
+        <td></td>
+      </tr>
+
+    </tbody>
+  </table>
+
+  <div class="note">
+    - L’élève ne pourra passer dans la classe supérieure s’il ne subit avec succès un examen de repêchage.<br>
+    - L’élève passe dans la classe supérieure (1).<br>
+    - L’élève double sa classe (1).<br>
+    - L’élève a échoué et est orienté vers ……………………. (1).
+  </div>
+
+  <div class="signature-section">
+    <div class="signature-box">Signature de l’élève<br><br>__________________</div>
+    <div class="signature-box">Sceau de l’école</div>
+    <div class="signature-box">Le Chef d’établissement<br><br>__________________</div>
+  </div>
+
+</div>
+</body>
+</html>

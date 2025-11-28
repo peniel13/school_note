@@ -1,0 +1,85 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Bulletin Scolaire</title>
+<style>
+  body { font-family: "Times New Roman", serif; background: #fff; margin: 20px; }
+  .bulletin { width: 1024px; margin: auto; border: 2px solid #000; padding: 8px; }
+  .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 4px; }
+  .header h1, .header h2 { margin: 2px 0; font-size: 14px; }
+  table { border-collapse: collapse; width: 100%; margin-top: 8px; font-size: 12px; text-align: center; }
+  th, td { border: 1px solid #000; padding: 3px; }
+  th { background: #eee; font-weight: bold; }
+  .section-title { font-weight: bold; background: #f5f5f5; text-align: left; }
+  .signatures { display: flex; justify-content: space-between; margin-top: 15px; font-size: 12px; }
+  .signature-box { width: 30%; text-align: center; }
+  .note { font-size: 11px; margin-top: 10px; }
+  .center { text-align: center; }
+</style>
+</head>
+<body>
+<div class="bulletin">
+  <div class="header">
+    <h1>RÉPUBLIQUE DÉMOCRATIQUE DU CONGO</h1>
+    <h2>MINISTÈRE DE L’ENSEIGNEMENT PRIMAIRE, SECONDAIRE ET TECHNIQUE</h2>
+  </div>
+
+  <div class="center" style="margin:8px 0;">
+    <b>{{ semestre.nom|default:"BULLETIN DU SEMESTRE" }}</b><br>
+    <span>{{ semestre.classe.nom }} – Année scolaire {{ annee_scolaire }}</span>
+  </div>
+
+  <table>
+    <tr>
+      <th rowspan="3">BRANCHES</th>
+      <th colspan="4">PREMIER SEMESTRE</th>
+      <th colspan="4">SECOND SEMESTRE</th>
+      <th rowspan="3">TOT GÉNÉRAL</th>
+      <th rowspan="3">EXAMEN</th>
+      <th rowspan="3">%</th>
+    </tr>
+    <tr>
+      <th colspan="4">1<sup>er</sup> et 2<sup>ème</sup> P.</th>
+      <th colspan="4">3<sup>ème</sup> et 4<sup>ème</sup> P.</th>
+    </tr>
+    <tr>
+      <th>1<sup>er</sup> P</th><th>2<sup>ème</sup> P</th><th>Exam</th><th>TOT</th>
+      <th>3<sup>ème</sup> P</th><th>4<sup>ème</sup> P</th><th>Exam</th><th>TOT</th>
+    </tr>
+
+    {% for group, items in grouped_maximas.items %}
+      <tr><td class="section-title" colspan="12">{{ group }}</td></tr>
+      {% for item in items %}
+      <tr>
+        <td>{{ item.matiere }}</td>
+        <td>{{ item.p1 }}</td>
+        <td>{{ item.p2 }}</td>
+        <td>{{ item.exam }}</td>
+        <td>{{ item.tot }}</td>
+        <td>{{ item.p3 }}</td>
+        <td>{{ item.p4 }}</td>
+        <td>{{ item.exam2 }}</td>
+        <td>{{ item.tot2 }}</td>
+        <td>{{ item.total_general }}</td>
+        <td></td>
+        <td>{{ item.pourcentage }}</td>
+      </tr>
+      {% endfor %}
+    {% endfor %}
+
+    <tr><td class="section-title">MAXIMA GÉNÉRAUX</td><td colspan="11"></td></tr>
+    <tr><td>TOTAUX ATTENDUS</td><td colspan="8"></td><td>{{ semestre.note_totale_attendue }}</td><td></td><td></td></tr>
+    <tr><td>TOTAUX ÉLÈVE</td><td colspan="8"></td><td>{{ total_obtenu }}</td><td></td><td></td></tr>
+    <tr><td>POURCENTAGE GLOBAL</td><td colspan="8"></td><td>{{ pourcentage_global }}%</td><td></td><td></td></tr>
+  </table>
+
+  <div class="signatures">
+    <div class="signature-box">Signature Élève<br>__________________</div>
+    <div class="signature-box">Sceau École</div>
+    <div class="signature-box">Chef d’établissement<br>__________________</div>
+  </div>
+</div>
+</body>
+</html>

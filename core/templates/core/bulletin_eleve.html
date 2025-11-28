@@ -1,0 +1,1687 @@
+{% extends "base.html" %}
+{% load static %}
+{% load custom_tags %}
+
+{% block title %}Bulletin de {{ eleve.nom }}{% endblock %}
+
+{% block content %}
+
+<style>
+  /* Amélioration totale responsive */
+  .bulletin-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+  }
+
+  /* Scrollbar moderne */
+  .bulletin-container::-webkit-scrollbar { height: 6px; }
+  .bulletin-container::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 20px;
+  }
+
+  /* Réduction de la taille des colonnes */
+  table th, table td {
+    padding: 3px !important;
+    font-size: 0.70rem !important;
+    white-space: nowrap;
+  }
+</style>
+
+<div class="bulletin border border-gray-800 p-4 bg-white text-black max-w-5xl mx-auto my-6 shadow-lg">
+
+  <!-- En-tête -->
+  <div class="text-center mb-4">
+    <h2 class="text-lg font-bold uppercase">République Démocratique du Congo</h2>
+    <h3 class="font-semibold text-sm">Ministère de l’Enseignement Primaire, Secondaire et Technique</h3>
+    <h4 class="mt-2 font-semibold">{{ school.nom }} — Année scolaire : {{ school.annee_scolaire }}</h4>
+    <h4 class="font-semibold text-gray-700">Classe : {{ classe.nom }}</h4>
+    <h4 class="font-semibold text-gray-700">Bulletin de l'élève : {{ eleve.nom }}</h4>
+  </div>
+
+  <!-- TABLE SCROLLABLE RESPONSIVE -->
+  <div class="bulletin-container">
+    <table class="min-w-max w-full text-xs border border-black border-collapse text-center">
+      <thead>
+        <tr>
+          <th rowspan="{{ rowspan_branches }}" class="border border-black">BRANCHES</th>
+
+          {% for semestre in semestres %}
+            {% for p in periodes_par_semestre|get_item:semestre %}
+              <th class="border border-black">{{ p.nom }}</th>
+            {% endfor %}
+            <th class="border border-black">Tot. Sem</th>
+          {% endfor %}
+
+          <th class="border border-black">T.G</th>
+          <th class="border border-black">%</th>
+          <th class="border border-black">Sign. Prof</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        
+        {% for section in bulletin_sections %}
+          <!-- Maxima -->
+          <tr class="font-semibold bg-gray-100">
+            <td class="border border-black text-left pl-2">
+              MAXIMA ({{ section.maxima_identifiant|default:'ND' }})
+            </td>
+
+            {% for semestre in semestres %}
+              {% for p in periodes_par_semestre|get_item:semestre %}
+                <td class="border border-black">
+                  {{ section.maxima_notes_by_periode|get_item:p|default:"—"|floatformat:2 }}
+                </td>
+              {% endfor %}
+              <td class="border border-black">
+                {{ section.maxima_section_totaux|get_item:semestre|floatformat:2 }}
+              </td>
+            {% endfor %}
+
+            <td class="border border-black">
+              {{ section.total_general_maxima_section|floatformat:2 }}
+            </td>
+            <td class="border border-black">—</td>
+            <td class="border border-black">—</td>
+          </tr>
+
+          <!-- Matières -->
+          {% for matiere in section.matieres_section %}
+          <tr>
+            <td class="border border-black text-left pl-4">{{ matiere.nom }}</td>
+
+            {% for semestre in semestres %}
+              {% for p in periodes_par_semestre|get_item:semestre %}
+                {% with notes_by_matiere|get_item:matiere|get_item:p as note %}
+                  {% with maxima_val_period=section.maxima_notes_by_periode|get_item:p %}
+                    {% if maxima_val_period and note and note.note_obtenue is not None and note.note_obtenue < maxima_val_period|floatdivide:2 %}
+                      <td class="border border-black text-red-600 font-bold">
+                        {{ note.note_obtenue|floatformat:2 }}
+                      </td>
+                    {% else %}
+                      <td class="border border-black">
+                        {{ note.note_obtenue|default:"-" }}
+                      </td>
+                    {% endif %}
+                  {% endwith %}
+                {% endwith %}
+              {% endfor %}
+
+              {% with total_mat_sem=section.totaux_semestre_par_matiere|get_item:matiere|get_item:semestre %}
+                {% with max_sem=section.maxima_section_totaux|get_item:semestre %}
+                  {% if max_sem > 0 and total_mat_sem < max_sem|floatdivide:2 %}
+                    <td class="border border-black text-red-600 font-bold">
+                      {{ total_mat_sem|floatformat:2 }}
+                    </td>
+                  {% else %}
+                    <td class="border border-black">
+                      {{ total_mat_sem|floatformat:2 }}
+                    </td>
+                  {% endif %}
+                {% endwith %}
+              {% endwith %}
+            {% endfor %}
+
+            {% with total_global=section.totaux_global_par_matiere|get_item:matiere %}
+              {% with max_tg=section.total_general_maxima_section %}
+                {% if max_tg > 0 and total_global < max_tg|floatdivide:2 %}
+                  <td class="border border-black text-red-600 font-bold">
+                    {{ total_global|floatformat:2 }}
+                  </td>
+                {% else %}
+                  <td class="border border-black">
+                    {{ total_global|floatformat:2 }}
+                  </td>
+                {% endif %}
+              {% endwith %}
+            {% endwith %}
+
+            <td class="border border-black">—</td>
+            <td class="border border-black">—</td>
+          </tr>
+          {% endfor %}
+        {% endfor %}
+      </tbody>
+
+      <tfoot class="font-semibold bg-gray-200">
+        <!-- Totaux généraux -->
+        <tr>
+          <td class="border border-black text-right pr-2">Maximas généraux :</td>
+
+          {% for semestre in semestres %}
+            {% for p in periodes_par_semestre|get_item:semestre %}
+              <td class="border border-black">
+                {{ maxima_generaux|get_item:p|floatformat:2 }}
+              </td>
+            {% endfor %}
+            <td class="border border-black">{{ totaux_semestre|get_item:semestre|floatformat:2 }}</td>
+          {% endfor %}
+
+          <td class="border border-black">{{ total_general_attendu|floatformat:2 }}</td>
+          <td class="border border-black">—</td>
+          <td class="border border-black">—</td>
+        </tr>
+
+        <!-- Totaux matières -->
+        <tr>
+          <td class="border border-black text-right pr-2">Totaux matières :</td>
+
+          {% for semestre in semestres %}
+            {% for p in periodes_par_semestre|get_item:semestre %}
+              {% if total_periode_obtenu|get_item:p < maxima_generaux|get_item:p|floatdivide:2 %}
+              <td class="border border-black text-red-600 font-bold">
+                {{ total_periode_obtenu|get_item:p|floatformat:2 }}
+              </td>
+              {% else %}
+              <td class="border border-black">
+                {{ total_periode_obtenu|get_item:p|floatformat:2 }}
+              </td>
+              {% endif %}
+            {% endfor %}
+
+            {% if total_semestre_obtenu|get_item:semestre < totaux_semestre|get_item:semestre|floatdivide:2 %}
+              <td class="border border-black text-red-600 font-bold">
+                {{ total_semestre_obtenu|get_item:semestre|floatformat:2 }}
+              </td>
+            {% else %}
+              <td class="border border-black">
+                {{ total_semestre_obtenu|get_item:semestre|floatformat:2 }}
+              </td>
+            {% endif %}
+          {% endfor %}
+
+          {% if total_obtenu < total_general_attendu|floatdivide:2 %}
+            <td class="border border-black text-red-600 font-bold">{{ total_obtenu|floatformat:2 }}</td>
+          {% else %}
+            <td class="border border-black">{{ total_obtenu|floatformat:2 }}</td>
+          {% endif %}
+          <td class="border border-black">—</td>
+          <td class="border border-black">—</td>
+        </tr>
+
+        <!-- Pourcentages -->
+        <tr>
+          <td class="border border-black text-right pr-2">Pourcentage périodique :</td>
+
+          {% for semestre in semestres %}
+            {% for p in periodes_par_semestre|get_item:semestre %}
+              {% if pourcentage_periode|get_item:p < 50 %}
+                <td class="border border-black text-red-600 font-bold">
+                  {{ pourcentage_periode|get_item:p|floatformat:2 }} %
+                </td>
+              {% else %}
+                <td class="border border-black">
+                  {{ pourcentage_periode|get_item:p|floatformat:2 }} %
+                </td>
+              {% endif %}
+            {% endfor %}
+
+            {% if pourcentage_semestre|get_item:semestre < 50 %}
+              <td class="border border-black text-red-600 font-bold">
+                {{ pourcentage_semestre|get_item:semestre|floatformat:2 }} %
+              </td>
+            {% else %}
+              <td class="border border-black">
+                {{ pourcentage_semestre|get_item:semestre|floatformat:2 }} %
+              </td>
+            {% endif %}
+          {% endfor %}
+
+          {% if pourcentage_total < 50 %}
+            <td class="border border-black text-red-600 font-bold">
+              {{ pourcentage_total|floatformat:2 }} %
+            </td>
+          {% else %}
+            <td class="border border-black">
+              {{ pourcentage_total|floatformat:2 }} %
+            </td>
+          {% endif %}
+
+          <td class="border border-black">—</td>
+          <td class="border border-black">—</td>
+        </tr>
+
+        <!-- Classement -->
+        <tr>
+          <td class="border border-black text-right pr-2">Place / Nbre élèves :</td>
+
+          {% for semestre in semestres %}
+            {% for p in periodes_par_semestre|get_item:semestre %}
+              <td class="border border-black">
+                {{ rang_par_periode|get_item:p|default:"—" }}
+              </td>
+            {% endfor %}
+            <td class="border border-black">
+              {{ rang_par_semestre|get_item:semestre|default:"—" }}
+            </td>
+          {% endfor %}
+
+          <td class="border border-black">
+            {{ rang_general|default:"—" }}
+          </td>
+          <td class="border border-black">—</td>
+          <td class="border border-black">—</td>
+        </tr>
+
+      </tfoot>
+    </table>
+  </div>
+
+  <div class="text-xs text-gray-700 mt-4">
+    <p>- L’élève passe dans la classe supérieure si la moyenne générale est ≥ 50 %.</p>
+    <p>- Ce bulletin est sans valeur s’il est raturé ou modifié.</p>
+  </div>
+
+  <div class="mt-4 text-center flex flex-col sm:flex-row sm:justify-center">
+    <a href="{% url 'bulletin_eleve_pdf' eleve.id %}"
+       class="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 transition mb-2 sm:mb-0">
+        Télécharger le bulletin PDF
+    </a>
+
+    
+  </div>
+</div>
+
+{% endblock %}
+
+
+{% comment %} {% extends "base.html" %}
+{% load static %}
+{% load custom_tags %}
+
+{% block title %}Bulletin de {{ eleve.nom }}{% endblock %}
+
+{% block content %}
+<div class="bulletin border border-gray-800 p-6 bg-white text-black max-w-5xl mx-auto my-8 shadow-lg">
+  <!-- En-tête -->
+  <div class="text-center mb-4">
+    <h2 class="text-lg font-bold uppercase">République Démocratique du Congo</h2>
+    <h3 class="font-semibold text-sm">Ministère de l’Enseignement Primaire, Secondaire et Technique</h3>
+    <h4 class="mt-2 font-semibold">{{ school.nom }} — Année scolaire : {{ school.annee_scolaire }}</h4>
+    <h4 class="font-semibold text-gray-700">Classe : {{ classe.nom }}</h4>
+    <h4 class="font-semibold text-gray-700">Bulletin de l'élève : {{ eleve.nom }}</h4>
+  </div>
+
+  <table class="w-full text-xs border border-black border-collapse text-center">
+    <thead>
+      <tr>
+        <th rowspan="{{ rowspan_branches }}" class="border border-black">BRANCHES</th>
+        {% for semestre in semestres %}
+          {% for p in periodes_par_semestre|get_item:semestre %}
+            <th class="border border-black">{{ p.nom }}</th>
+          {% endfor %}
+          <th class="border border-black">Tot. Sem</th>
+        {% endfor %}
+        <th class="border border-black">T.G</th>
+        <th class="border border-black">%</th>
+        <th class="border border-black">Sign. Prof</th>
+      </tr>
+    </thead>
+
+   
+    <tbody>
+      {% for section in bulletin_sections %}
+          
+          <tr class="font-semibold bg-gray-100">
+              {# CORRECTION : Utilisation de maxima_identifiant au lieu de maxima_nom #}
+              <td class="border border-black text-left pl-2">MAXIMA ({{ section.maxima_identifiant|default:'ND' }})</td>
+              
+              {% for semestre in semestres %}
+                  {% for p in periodes_par_semestre|get_item:semestre %}
+                      {# Affiche la note Maxima pour cette période spécifique, si elle existe dans le groupe #}
+                      <td class="border border-black">
+                          {{ section.maxima_notes_by_periode|get_item:p|default:"—"|floatformat:2 }}
+                      </td>
+                  {% endfor %}
+                  <td class="border border-black">
+                      {{ section.maxima_section_totaux|get_item:semestre|floatformat:2 }}
+                  </td>
+              {% endfor %}
+              <td class="border border-black">
+                  {{ section.total_general_maxima_section|floatformat:2 }}
+              </td>
+              <td class="border border-black">—</td>
+              <td class="border border-black">—</td>
+          </tr>
+  
+          {% for matiere in section.matieres_section %}
+              <tr>
+                  <td class="border border-black text-left pl-4">{{ matiere.nom }}</td>
+                  
+                  {% for semestre in semestres %}
+                      {% for p in periodes_par_semestre|get_item:semestre %}
+                          {# Note par période #}
+                          {% with notes_by_matiere|get_item:matiere|get_item:p as note %}
+                              {# Récupère la note Maxima spécifique à la période p pour la coloration #}
+                              {% with maxima_val_period=section.maxima_notes_by_periode|get_item:p %} 
+                                  {% if maxima_val_period and note and note.note_obtenue is not None and note.note_obtenue < maxima_val_period|floatdivide:2 %}
+                                      <td class="border border-black text-red-600 font-bold">
+                                          {{ note.note_obtenue|floatformat:2 }}
+                                      </td>
+                                  {% else %}
+                                      <td class="border border-black">
+                                          {{ note.note_obtenue|default:"-" }}
+                                      </td>
+                                  {% endif %}
+                              {% endwith %}
+                          {% endwith %}
+                      {% endfor %}
+                      
+                      {# Total Obtenu par Matière pour ce Semestre (section-specific) #}
+                      {% with total_mat_sem=section.totaux_semestre_par_matiere|get_item:matiere|get_item:semestre %}
+                          {# Maxima Attendue par Semestre pour ce Bloc #}
+                          {% with max_sem=section.maxima_section_totaux|get_item:semestre %}
+                              {% if max_sem > 0 and total_mat_sem < max_sem|floatdivide:2 %}
+                                  <td class="border border-black text-red-600 font-bold">
+                                      {{ total_mat_sem|floatformat:2 }}
+                                  </td>
+                              {% else %}
+                                  <td class="border border-black">
+                                      {{ total_mat_sem|floatformat:2 }}
+                                  </td>
+                              {% endif %}
+                          {% endwith %}
+                      {% endwith %}
+                  {% endfor %}
+                  
+                  {# Total Obtenu Global par Matière (section-specific) #}
+                  {% with total_global=section.totaux_global_par_matiere|get_item:matiere %}
+                      {# Maxima Attendu Global pour ce Bloc #}
+                      {% with max_tg=section.total_general_maxima_section %}
+                          {% if max_tg > 0 and total_global < max_tg|floatdivide:2 %}
+                              <td class="border border-black text-red-600 font-bold">
+                                  {{ total_global|floatformat:2 }}
+                              </td>
+                          {% else %}
+                              <td class="border border-black">
+                                  {{ total_global|floatformat:2 }}
+                              </td>
+                          {% endif %}
+                      {% endwith %}
+                  {% endwith %}
+                  
+                  <td class="border border-black">—</td>
+                  <td class="border border-black">—</td>
+              </tr>
+          {% endfor %}
+          
+      {% endfor %}
+  </tbody>
+
+    <tfoot class="font-semibold bg-gray-200">
+      <!-- Totaux généraux -->
+      <tr>
+        <td class="border border-black text-right pr-2">Maximas généraux :</td>
+        {% for semestre in semestres %}
+          {% for p in periodes_par_semestre|get_item:semestre %}
+            <td class="border border-black">
+              {{ maxima_generaux|get_item:p|floatformat:2 }}
+            </td>
+          {% endfor %}
+          <td class="border border-black">
+            {{ totaux_semestre|get_item:semestre|floatformat:2 }}
+          </td>
+        {% endfor %}
+        <td class="border border-black">{{ total_general_attendu|floatformat:2 }}</td>
+        <td class="border border-black">—</td>
+        <td class="border border-black">—</td>
+      </tr>
+
+      <!-- Totaux matières par période avec vérification rouge -->
+      <tr>
+        <td class="border border-black text-right pr-2">Totaux matières :</td>
+        {% for semestre in semestres %}
+          {% for p in periodes_par_semestre|get_item:semestre %}
+            {% if total_periode_obtenu|get_item:p < maxima_generaux|get_item:p|floatdivide:2 %}
+              <td class="border border-black text-red-600 font-bold">
+                {{ total_periode_obtenu|get_item:p|floatformat:2 }}
+              </td>
+            {% else %}
+              <td class="border border-black">
+                {{ total_periode_obtenu|get_item:p|floatformat:2 }}
+              </td>
+            {% endif %}
+          {% endfor %}
+          {% if total_semestre_obtenu|get_item:semestre < totaux_semestre|get_item:semestre|floatdivide:2 %}
+            <td class="border border-black text-red-600 font-bold">
+              {{ total_semestre_obtenu|get_item:semestre|floatformat:2 }}
+            </td>
+          {% else %}
+            <td class="border border-black">
+              {{ total_semestre_obtenu|get_item:semestre|floatformat:2 }}
+            </td>
+          {% endif %}
+        {% endfor %}
+        {% if total_obtenu < total_general_attendu|floatdivide:2 %}
+          <td class="border border-black text-red-600 font-bold">{{ total_obtenu|floatformat:2 }}</td>
+        {% else %}
+          <td class="border border-black">{{ total_obtenu|floatformat:2 }}</td>
+        {% endif %}
+        <td class="border border-black">—</td>
+        <td class="border border-black">—</td>
+      </tr>
+
+      <!-- Pourcentage périodique -->
+      <tr>
+        <td class="border border-black text-right pr-2">Pourcentage périodique :</td>
+        {% for semestre in semestres %}
+          {% for p in periodes_par_semestre|get_item:semestre %}
+            {% if pourcentage_periode|get_item:p < 50 %}
+              <td class="border border-black text-red-600 font-bold">
+                {{ pourcentage_periode|get_item:p|floatformat:2 }} %
+              </td>
+            {% else %}
+              <td class="border border-black">
+                {{ pourcentage_periode|get_item:p|floatformat:2 }} %
+              </td>
+            {% endif %}
+          {% endfor %}
+          {% if pourcentage_semestre|get_item:semestre < 50 %}
+            <td class="border border-black text-red-600 font-bold">
+              {{ pourcentage_semestre|get_item:semestre|floatformat:2 }} %
+            </td>
+          {% else %}
+            <td class="border border-black">
+              {{ pourcentage_semestre|get_item:semestre|floatformat:2 }} %
+            </td>
+          {% endif %}
+        {% endfor %}
+        {% if pourcentage_total < 50 %}
+          <td class="border border-black text-red-600 font-bold">
+            {{ pourcentage_total|floatformat:2 }} %
+          </td>
+        {% else %}
+          <td class="border border-black">
+            {{ pourcentage_total|floatformat:2 }} %
+          </td>
+        {% endif %}
+        <td class="border border-black">—</td>
+        <td class="border border-black">—</td>
+      </tr>
+
+      <!-- Place / Nbre élèves -->
+      <tr>
+        <td class="border border-black text-right pr-2">Place / Nbre élèves :</td>
+        {% for semestre in semestres %}
+          {% for p in periodes_par_semestre|get_item:semestre %}
+            <td class="border border-black">
+              {{ rang_par_periode|get_item:p|default:"—" }}
+            </td>
+          {% endfor %}
+          <td class="border border-black">
+            {{ rang_par_semestre|get_item:semestre|default:"—" }}
+          </td>
+        {% endfor %}
+        <td class="border border-black">
+          {{ rang_general|default:"—" }}
+        </td>
+        <td class="border border-black">—</td>
+        <td class="border border-black">—</td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <div class="text-xs text-gray-700 mt-4">
+    <p>- L’élève passe dans la classe supérieure si la moyenne générale est ≥ 50 %.</p>
+    <p>- Ce bulletin est sans valeur s’il est raturé ou modifié.</p>
+  </div>
+  <div class="mt-4 text-center flex flex-col sm:flex-row sm:justify-center">
+    <a href="{% url 'bulletin_eleve_pdf' eleve.id %}" class="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 transition duration-150 mb-2 sm:mb-0">
+        Télécharger le bulletin PDF
+    </a>
+
+    <a href="{% url 'bulletin_eleve_excel' eleve.id %}" class="bg-green-600 text-white px-4 py-2 sm:ml-4 rounded shadow hover:bg-green-700 transition duration-150">
+        Télécharger le bulletin Excel
+    </a>
+</div>
+  {% comment %} <div class="mt-4 text-center">
+    <a href="{% url 'bulletin_eleve_pdf' eleve.id %}" class="bg-blue-600 text-white px-4 py-2 rounded shadow">
+      Télécharger le bulletin PDF
+    </a>
+  </div> 
+</div>
+{% endblock %}    {% endcomment %} 
+ 
+ {% comment %} {% extends "base.html" %}
+{% load static %}
+{% load custom_tags %}
+
+{% block title %}Bulletin de {{ eleve.nom }}{% endblock %}
+
+{% block content %}
+<div class="bulletin border border-gray-800 p-6 bg-white text-black max-w-5xl mx-auto my-8 shadow-lg">
+  <!-- En-tête -->
+  <div class="text-center mb-4">
+    <h2 class="text-lg font-bold uppercase">République Démocratique du Congo</h2>
+    <h3 class="font-semibold text-sm">Ministère de l’Enseignement Primaire, Secondaire et Technique</h3>
+    <h4 class="mt-2 font-semibold">{{ school.nom }} — Année scolaire : {{ school.annee_scolaire }}</h4>
+    <h4 class="font-semibold text-gray-700">Classe : {{ classe.nom }}</h4>
+    <h4 class="font-semibold text-gray-700">Bulletin de l'élève : {{ eleve.nom }}</h4>
+  </div>
+
+  <table class="w-full text-xs border border-black border-collapse text-center">
+    <thead>
+      <tr>
+        <th rowspan="{{ rowspan_branches }}" class="border border-black">BRANCHES</th>
+        {% for semestre in semestres %}
+          {% for p in periodes_par_semestre|get_item:semestre %}
+            <th class="border border-black">{{ p.nom }}</th>
+          {% endfor %}
+          <th class="border border-black">Tot. Sem</th>
+        {% endfor %}
+        <th class="border border-black">T.G</th>
+        <th class="border border-black">%</th>
+        <th class="border border-black">Sign. Prof</th>
+      </tr>
+    </thead>
+
+    {% comment %} <tbody>
+      <!-- Ligne MAXIMA -->
+      <tr class="font-semibold bg-gray-100">
+        <td class="border border-black text-left pl-2">MAXIMA</td>
+        {% for semestre in semestres %}
+          {% for p in periodes_par_semestre|get_item:semestre %}
+            {% with maxima_by_periode|get_item:p as maxima_val %}
+              <td class="border border-black">
+                {{ maxima_val|default:"-"|floatformat:2 }}
+              </td>
+            {% endwith %}
+          {% endfor %}
+          <td class="border border-black">
+            {{ totsem_maxima|get_item:semestre|floatformat:2 }}
+          </td>
+        {% endfor %}
+        <td class="border border-black">
+          {{ total_maxima_general|floatformat:2 }}
+        </td>
+        <td class="border border-black">—</td>
+        <td class="border border-black">—</td>
+      </tr>
+
+      <!-- Lignes pour chaque matière -->
+      {% for matiere in matieres %}
+        <tr>
+          <td class="border border-black text-left pl-4">{{ matiere.nom }}</td>
+          {% for semestre in semestres %}
+            {% for p in periodes_par_semestre|get_item:semestre %}
+              {% with notes_by_matiere|get_item:matiere|get_item:p as note %}
+                {% with maxima_by_periode|get_item:p as maxima_val %}
+                  {% if note and note.note_obtenue < maxima_val|floatdivide:2 %}
+                    <td class="border border-black text-red-600 font-bold">
+                      {{ note.note_obtenue|floatformat:2 }}
+                    </td>
+                  {% else %}
+                    <td class="border border-black">
+                      {{ note.note_obtenue|default:"-" }}
+                    </td>
+                  {% endif %}
+                {% endwith %}
+              {% endwith %}
+            {% endfor %}
+            {% with tot_matieres_semestre|get_item:matiere|get_item:semestre as total_mat_sem %}
+              {% with totaux_semestre|get_item:semestre as max_sem %}
+                {% if total_mat_sem < max_sem|floatdivide:2 %}
+                  <td class="border border-black text-red-600 font-bold">
+                    {{ total_mat_sem|floatformat:2 }}
+                  </td>
+                {% else %}
+                  <td class="border border-black">
+                    {{ total_mat_sem|floatformat:2 }}
+                  </td>
+                {% endif %}
+              {% endwith %}
+            {% endwith %}
+          {% endfor %}
+          {% with total_global=tot_matieres_global|get_item:matiere %}
+            {% if total_global < total_general_attendu|floatdivide:2 %}
+              <td class="border border-black text-red-600 font-bold">
+                {{ total_global|floatformat:2 }}
+              </td>
+            {% else %}
+              <td class="border border-black">
+                {{ total_global|floatformat:2 }}
+              </td>
+            {% endif %}
+          {% endwith %}
+          <td class="border border-black">—</td>
+          <td class="border border-black">—</td>
+        </tr>
+      {% endfor %}
+    </tbody> {% endcomment %}
+    {% comment %} <tbody>
+      {% for section in bulletin_sections %}
+          {# Récupérer la valeur du maxima du bloc une seule fois #}
+          {% with section.maxima_obj.note_attendue as maxima_val_section %}
+          
+              <tr class="font-semibold bg-gray-100">
+                  <td class="border border-black text-left pl-2">MAXIMA ({{ section.maxima_obj.nom|default:'ND' }})</td>
+                  
+                  {% for semestre in semestres %}
+                      {% for p in periodes_par_semestre|get_item:semestre %}
+                          <td class="border border-black">
+                              {# Afficher le Maxima uniquement si cette période est couverte par cet objet Maxima #}
+                              {% if school.type_ecole == "primaire" and section.maxima_obj.periode_primaire == p or school.type_ecole == "secondaire" and section.maxima_obj.periode_secondaire == p %}
+                                  {{ maxima_val_section|floatformat:2 }}
+                              {% else %}
+                                  —
+                              {% endif %}
+                          </td>
+                      {% endfor %}
+                      <td class="border border-black">
+                          {{ section.maxima_section_totaux|get_item:semestre|floatformat:2 }}
+                      </td>
+                  {% endfor %}
+                  <td class="border border-black">
+                      {{ section.total_general_maxima_section|floatformat:2 }}
+                  </td>
+                  <td class="border border-black">—</td>
+                  <td class="border border-black">—</td>
+              </tr>
+  
+              {% for matiere in section.matieres_section %}
+                  <tr>
+                      <td class="border border-black text-left pl-4">{{ matiere.nom }}</td>
+                      
+                      {% for semestre in semestres %}
+                          {% for p in periodes_par_semestre|get_item:semestre %}
+                              {# Note par période #}
+                              {% with notes_by_matiere|get_item:matiere|get_item:p as note %}
+                                  {% if note and note.note_obtenue is not None and note.note_obtenue < maxima_val_section|floatdivide:2 %}
+                                      <td class="border border-black text-red-600 font-bold">
+                                          {{ note.note_obtenue|floatformat:2 }}
+                                      </td>
+                                  {% else %}
+                                      <td class="border border-black">
+                                          {{ note.note_obtenue|default:"-" }}
+                                      </td>
+                                  {% endif %}
+                              {% endwith %}
+                          {% endfor %}
+                          
+                          {# Total Obtenu par Matière pour ce Semestre (section-specific) #}
+                          {% with total_mat_sem=section.totaux_semestre_par_matiere|get_item:matiere|get_item:semestre %}
+                              {# Maxima Attendue par Semestre pour ce Bloc #}
+                              {% with max_sem=section.maxima_section_totaux|get_item:semestre %}
+                                  {% if max_sem > 0 and total_mat_sem < max_sem|floatdivide:2 %}
+                                      <td class="border border-black text-red-600 font-bold">
+                                          {{ total_mat_sem|floatformat:2 }}
+                                      </td>
+                                  {% else %}
+                                      <td class="border border-black">
+                                          {{ total_mat_sem|floatformat:2 }}
+                                      </td>
+                                  {% endif %}
+                              {% endwith %}
+                          {% endwith %}
+                      {% endfor %}
+                      
+                      {# Total Obtenu Global par Matière (section-specific) #}
+                      {% with total_global=section.totaux_global_par_matiere|get_item:matiere %}
+                          {# Maxima Attendu Global pour ce Bloc #}
+                          {% with max_tg=section.total_general_maxima_section %}
+                              {% if max_tg > 0 and total_global < max_tg|floatdivide:2 %}
+                                  <td class="border border-black text-red-600 font-bold">
+                                      {{ total_global|floatformat:2 }}
+                                  </td>
+                              {% else %}
+                                  <td class="border border-black">
+                                      {{ total_global|floatformat:2 }}
+                                  </td>
+                              {% endif %}
+                          {% endwith %}
+                      {% endwith %}
+                      
+                      <td class="border border-black">—</td>
+                      <td class="border border-black">—</td>
+                  </tr>
+              {% endfor %}
+          
+          {% endwith %}
+      {% endfor %}
+  </tbody>
+    <tfoot class="font-semibold bg-gray-200">
+      <!-- Totaux généraux -->
+      <tr>
+        <td class="border border-black text-right pr-2">Maximas généraux :</td>
+        {% for semestre in semestres %}
+          {% for p in periodes_par_semestre|get_item:semestre %}
+            <td class="border border-black">
+              {{ maxima_generaux|get_item:p|floatformat:2 }}
+            </td>
+          {% endfor %}
+          <td class="border border-black">
+            {{ totaux_semestre|get_item:semestre|floatformat:2 }}
+          </td>
+        {% endfor %}
+        <td class="border border-black">{{ total_general_attendu|floatformat:2 }}</td>
+        <td class="border border-black">—</td>
+        <td class="border border-black">—</td>
+      </tr>
+
+      <!-- Totaux matières par période avec vérification rouge -->
+      <tr>
+        <td class="border border-black text-right pr-2">Totaux matières :</td>
+        {% for semestre in semestres %}
+          {% for p in periodes_par_semestre|get_item:semestre %}
+            {% if total_periode_obtenu|get_item:p < maxima_generaux|get_item:p|floatdivide:2 %}
+              <td class="border border-black text-red-600 font-bold">
+                {{ total_periode_obtenu|get_item:p|floatformat:2 }}
+              </td>
+            {% else %}
+              <td class="border border-black">
+                {{ total_periode_obtenu|get_item:p|floatformat:2 }}
+              </td>
+            {% endif %}
+          {% endfor %}
+          {% if total_semestre_obtenu|get_item:semestre < totaux_semestre|get_item:semestre|floatdivide:2 %}
+            <td class="border border-black text-red-600 font-bold">
+              {{ total_semestre_obtenu|get_item:semestre|floatformat:2 }}
+            </td>
+          {% else %}
+            <td class="border border-black">
+              {{ total_semestre_obtenu|get_item:semestre|floatformat:2 }}
+            </td>
+          {% endif %}
+        {% endfor %}
+        {% if total_obtenu < total_general_attendu|floatdivide:2 %}
+          <td class="border border-black text-red-600 font-bold">{{ total_obtenu|floatformat:2 }}</td>
+        {% else %}
+          <td class="border border-black">{{ total_obtenu|floatformat:2 }}</td>
+        {% endif %}
+        <td class="border border-black">—</td>
+        <td class="border border-black">—</td>
+      </tr>
+
+      <!-- Pourcentage périodique -->
+      <tr>
+        <td class="border border-black text-right pr-2">Pourcentage périodique :</td>
+        {% for semestre in semestres %}
+          {% for p in periodes_par_semestre|get_item:semestre %}
+            {% if pourcentage_periode|get_item:p < 50 %}
+              <td class="border border-black text-red-600 font-bold">
+                {{ pourcentage_periode|get_item:p|floatformat:2 }} %
+              </td>
+            {% else %}
+              <td class="border border-black">
+                {{ pourcentage_periode|get_item:p|floatformat:2 }} %
+              </td>
+            {% endif %}
+          {% endfor %}
+          {% if pourcentage_semestre|get_item:semestre < 50 %}
+            <td class="border border-black text-red-600 font-bold">
+              {{ pourcentage_semestre|get_item:semestre|floatformat:2 }} %
+            </td>
+          {% else %}
+            <td class="border border-black">
+              {{ pourcentage_semestre|get_item:semestre|floatformat:2 }} %
+            </td>
+          {% endif %}
+        {% endfor %}
+        {% if pourcentage_total < 50 %}
+          <td class="border border-black text-red-600 font-bold">
+            {{ pourcentage_total|floatformat:2 }} %
+          </td>
+        {% else %}
+          <td class="border border-black">
+            {{ pourcentage_total|floatformat:2 }} %
+          </td>
+        {% endif %}
+        <td class="border border-black">—</td>
+        <td class="border border-black">—</td>
+      </tr>
+
+      <!-- Place / Nbre élèves -->
+      <tr>
+        <td class="border border-black text-right pr-2">Place / Nbre élèves :</td>
+        {% for semestre in semestres %}
+          {% for p in periodes_par_semestre|get_item:semestre %}
+            <td class="border border-black">
+              {{ rang_par_periode|get_item:p|default:"—" }}
+            </td>
+          {% endfor %}
+          <td class="border border-black">
+            {{ rang_par_semestre|get_item:semestre|default:"—" }}
+          </td>
+        {% endfor %}
+        <td class="border border-black">
+          {{ rang_general|default:"—" }}
+        </td>
+        <td class="border border-black">—</td>
+        <td class="border border-black">—</td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <div class="text-xs text-gray-700 mt-4">
+    <p>- L’élève passe dans la classe supérieure si la moyenne générale est ≥ 50 %.</p>
+    <p>- Ce bulletin est sans valeur s’il est raturé ou modifié.</p>
+  </div>
+  <div class="mt-4 text-center">
+    <a href="{% url 'bulletin_eleve_pdf' eleve.id %}" class="bg-blue-600 text-white px-4 py-2 rounded shadow">
+      Télécharger le bulletin PDF
+    </a>
+  </div>
+</div> 
+{% endblock %}  {% endcomment %}  
+
+
+
+{% comment %} {% extends "base.html" %}
+{% load static %}
+{% load custom_tags %}
+
+{% block title %}Bulletin de {{ eleve.nom }}{% endblock %}
+
+{% block content %}
+<div class="bulletin border border-gray-800 p-6 bg-white text-black max-w-5xl mx-auto my-8 shadow-lg">
+  <!-- En-tête -->
+  <div class="text-center mb-4">
+    <h2 class="text-lg font-bold uppercase">République Démocratique du Congo</h2>
+    <h3 class="font-semibold text-sm">Ministère de l’Enseignement Primaire, Secondaire et Technique</h3>
+    <h4 class="mt-2 font-semibold">{{ school.nom }} — Année scolaire : {{ school.annee_scolaire }}</h4>
+    <h4 class="font-semibold text-gray-700">Classe : {{ classe.nom }}</h4>
+    <h4 class="font-semibold text-gray-700">Bulletin de l'elève : {{ eleve.nom }}</h4>
+  </div>
+
+  <table class="w-full text-xs border border-black border-collapse text-center">
+    <thead>
+      <tr>
+        <th rowspan="{{ rowspan_branches }}" class="border border-black">BRANCHES</th>
+        {% for semestre in semestres %}
+          {% for p in periodes_par_semestre|get_item:semestre %}
+            <th class="border border-black">{{ p.nom }}</th>
+          {% endfor %}
+          <th class="border border-black">Tot. Sem</th>
+        {% endfor %}
+        <th class="border border-black">T.G</th>
+        <th class="border border-black">%</th>
+        <th class="border border-black">Sign. Prof</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <!-- Ligne MAXIMA -->
+      <!-- Ligne MAXIMA -->
+<tr class="font-semibold bg-gray-100">
+    <td class="border border-black text-left pl-2">MAXIMA</td>
+    {% for semestre in semestres %}
+      {% for p in periodes_par_semestre|get_item:semestre %}
+        <td class="border border-black">
+          {{ maxima_by_periode|get_item:p|default:"-"|floatformat:2 }}
+        </td>
+      {% endfor %}
+      <td class="border border-black">
+        {{ totsem_maxima|get_item:semestre|floatformat:2 }}
+      </td>
+    {% endfor %}
+    <td class="border border-black">
+      {{ total_maxima_general|floatformat:2 }}
+    </td>
+    <td class="border border-black">—</td>
+    <td class="border border-black">—</td>
+  </tr>
+  
+  
+
+      <!-- Lignes pour chaque matière -->
+      {% for matiere in matieres %}
+        <tr>
+          <td class="border border-black text-left pl-4">{{ matiere.nom }}</td>
+          {% for semestre in semestres %}
+            {% for p in periodes_par_semestre|get_item:semestre %}
+              <td class="border border-black">
+                {% with notes_by_matiere|get_item:matiere|get_item:p as note %}
+                  {{ note.note_obtenue|default:"-" }}
+                {% endwith %}
+              </td>
+            {% endfor %}
+            <td class="border border-black">
+              {{ tot_matieres_semestre|get_item:matiere|get_item:semestre|floatformat:2 }}
+            </td>
+          {% endfor %}
+          <td class="border border-black">
+            {{ tot_matieres_global|get_item:matiere|floatformat:2 }}
+          </td>
+          <td class="border border-black">—</td>
+          <td class="border border-black">—</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+
+    <tfoot class="font-semibold bg-gray-200">
+      <!-- Maximas généraux -->
+      <tr>
+        <td class="border border-black text-right pr-2">Maximas généraux :</td>
+        {% for semestre in semestres %}
+          {% for p in periodes_par_semestre|get_item:semestre %}
+            <td class="border border-black">
+              {{ maxima_generaux|get_item:p|floatformat:2 }}
+            </td>
+          {% endfor %}
+          <td class="border border-black">
+            {{ totaux_semestre|get_item:semestre|floatformat:2 }}
+          </td>
+        {% endfor %}
+        <td class="border border-black">{{ total_general_attendu|floatformat:2 }}</td>
+        <td class="border border-black">{{ pourcentage_total|floatformat:2 }} %</td>
+        <td class="border border-black">—</td>
+      </tr>
+
+      <!-- Totaux matières par période -->
+      <tr>
+        <td class="border border-black text-right pr-2">Totaux matières :</td>
+        {% for semestre in semestres %}
+          {% for p in periodes_par_semestre|get_item:semestre %}
+            <td class="border border-black">
+              {{ total_periode_obtenu|get_item:p|floatformat:2 }}
+            </td>
+          {% endfor %}
+          <td class="border border-black">
+            {{ total_semestre_obtenu|get_item:semestre|floatformat:2 }}
+          </td>
+        {% endfor %}
+        <td class="border border-black">{{ total_obtenu|floatformat:2 }}</td>
+        <td class="border border-black">—</td>
+        <td class="border border-black">—</td>
+      </tr>
+      
+
+      <!-- Pourcentage par période -->
+      <tr>
+        <td class="border border-black text-right pr-2">Pourcentage périodique :</td>
+        {% for semestre in semestres %}
+          {% for p in periodes_par_semestre|get_item:semestre %}
+            <td class="border border-black">
+              {{ pourcentage_periode|get_item:p|floatformat:2 }} %
+            </td>
+          {% endfor %}
+          <td class="border border-black">
+            {{ pourcentage_semestre|get_item:semestre|floatformat:2 }} %
+          </td>
+        {% endfor %}
+        <td class="border border-black">{{ pourcentage_total|floatformat:2 }} %</td>
+        <td class="border border-black">—</td>
+        <td class="border border-black">—</td>
+      </tr>
+      
+      <!-- Place / Nbre élèves -->
+      <!-- Place / Nbre élèves -->
+<tr>
+    <td class="border border-black text-right pr-2">Place / Nbre élèves :</td>
+    {% for semestre in semestres %}
+      {% for p in periodes_par_semestre|get_item:semestre %}
+        <td class="border border-black">
+          {{ rang_par_periode|get_item:p }}
+        </td>
+      {% endfor %}
+      <td class="border border-black">
+        {{ rang_par_semestre|get_item:semestre }}
+      </td>
+    {% endfor %}
+    <td class="border border-black">
+        {{ rang_general|default:"—" }}
+    </td>
+    <td class="border border-black">—</td>
+    <td class="border border-black">—</td>
+  </tr>
+  
+      
+    </tfoot>
+  </table>
+
+  <div class="text-xs text-gray-700 mt-4">
+    <p>- L’élève passe dans la classe supérieure si la moyenne générale est ≥ 50 %.</p>
+    <p>- Ce bulletin est sans valeur s’il est raturé ou modifié.</p>
+  </div>
+  <div class="mt-4 text-center">
+    <a href="{% url 'bulletin_eleve_pdf' eleve.id %}" class="bg-blue-600 text-white px-4 py-2 rounded shadow">
+      Télécharger le bulletin PDF
+    </a>
+  </div>
+  
+</div>
+{% endblock %} {% endcomment %}
+
+
+{% comment %} {% extends "base.html" %}
+{% load static %}
+{% load custom_tags %}
+
+{% block title %}Bulletin de {{ eleve.nom }}{% endblock %}
+
+{% block content %}
+<div class="bulletin border border-gray-800 p-6 bg-white text-black max-w-5xl mx-auto my-8 shadow-lg">
+  <!-- En-tête -->
+  <div class="text-center mb-4">
+    <h2 class="text-lg font-bold uppercase">République Démocratique du Congo</h2>
+    <h3 class="font-semibold text-sm">Ministère de l’Enseignement Primaire, Secondaire et Technique</h3>
+    <h4 class="mt-2 font-semibold">{{ school.nom }} — Année scolaire : {{ school.annee_scolaire }}</h4>
+    <h4 class="font-semibold text-gray-700">Classe : {{ classe.nom }}</h4>
+  </div>
+
+  <table class="w-full text-xs border border-black border-collapse text-center">
+    <thead>
+      <tr>
+        <th rowspan="{{ rowspan_branches }}" class="border border-black">BRANCHES</th>
+        {% for semestre in semestres %}
+          {% for p in periodes_par_semestre|get_item:semestre %}
+            <th class="border border-black">{{ p.nom }}</th>
+          {% endfor %}
+          <th class="border border-black">Tot. Sem</th>
+        {% endfor %}
+        <th class="border border-black">T.G</th>
+        <th class="border border-black">%</th>
+        <th class="border border-black">Sign. Prof</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <!-- Ligne MAXIMA -->
+      <tr class="font-semibold bg-gray-100">
+        <td class="border border-black text-left pl-2">MAXIMA</td>
+      
+        {% for semestre in semestres %}
+          {% for p in periodes_par_semestre|get_item:semestre %}
+            <td class="border border-black">
+              {% with maxima_by_periode|get_item:p as val %}
+                {% if val != None %}{{ val|floatformat:2 }}{% else %}-{% endif %}
+              {% endwith %}
+            </td>
+          {% endfor %}
+          <td class="border border-black">
+            {{ totaux_semestre|get_item:semestre|floatformat:2 }}
+          </td>
+        {% endfor %}
+      
+        <td class="border border-black">{{ total_general_attendu|floatformat:2 }}</td>
+        <td class="border border-black">{{ pourcentage_total|floatformat:2 }} %</td>
+        <td class="border border-black">—</td>
+      </tr>
+      
+      <!-- Lignes pour chaque matière -->
+      {% for matiere in matieres %}
+        <tr>
+          <td class="border border-black text-left pl-4">{{ matiere.nom }}</td>
+          {% for semestre in semestres %}
+            {% for p in periodes_par_semestre|get_item:semestre %}
+              <td class="border border-black">
+                {% with notes_by_matiere|get_item:matiere|get_item:p as note %}
+                  {% if note %}{{ note.note_obtenue }}{% else %}-{% endif %}
+                {% endwith %}
+              </td>
+            {% endfor %}
+            <td class="border border-black">
+              {{ tot_matieres_semestre|get_item:matiere|get_item:semestre }}
+            </td>
+          {% endfor %}
+          <td class="border border-black">
+            {{ tot_matieres_global|get_item:matiere }}
+          </td>
+          <td class="border border-black">—</td>
+          <td class="border border-black">—</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+
+    <tfoot class="font-semibold bg-gray-200">
+      <!-- Ligne des Maximas généraux / Totaux / Pourcentage / Place / Application -->
+      <tr>
+        <td class="border border-black text-right pr-2">Maximas généraux :</td>
+        {% for p in periodes %}
+          <td class="border border-black">
+            {{ maxima_generaux|get_item:p|floatformat:2 }}
+          </td>
+        {% endfor %}
+        <td class="border border-black">—</td>
+        <td class="border border-black">{{ total_general_attendu|floatformat:2 }}</td>
+        <td class="border border-black">{{ pourcentage_total|floatformat:2 }} %</td>
+        <td class="border border-black">—</td>
+        <td class="border border-black">—</td>
+      </tr>
+      
+
+      <!-- Ligne Totaux matières par période -->
+      <tr>
+        <td class="border border-black text-right pr-2">Totaux matières :</td>
+        {% for p in periodes %}
+          <td class="border border-black">
+            {{ total_periode_obtenu|get_item:p|floatformat:2 }}
+          </td>
+        {% endfor %}
+        <td class="border border-black">—</td>
+        <td class="border border-black">{{ total_obtenu|floatformat:2 }}</td>
+        <td class="border border-black">—</td>
+        <td class="border border-black">—</td>
+        <td class="border border-black">—</td>
+      </tr>
+
+      <!-- Ligne Pourcentage par période -->
+      <tr>
+        <td class="border border-black text-right pr-2">Pourcentage périodique :</td>
+        {% for p in periodes %}
+          <td class="border border-black">
+            {{ pourcentage_periode|get_item:p|floatformat:2 }}%
+          </td>
+        {% endfor %}
+        <td class="border border-black">—</td>
+        <td class="border border-black">{{ pourcentage_total|floatformat:2 }} %</td>
+        <td class="border border-black">—</td>
+        <td class="border border-black">—</td>
+        <td class="border border-black">—</td>
+      </tr>
+
+      <!-- Ligne Place / Nbre élèves par période -->
+      <tr>
+        <td class="border border-black text-right pr-2">Place / Nbre élèves :</td>
+        {% for p in periodes %}
+          <td class="border border-black">
+            {{ rang_par_periode|get_item:p }}
+          </td>
+        {% endfor %}
+        <td class="border border-black">—</td>
+        <td class="border border-black">—</td>
+        <td class="border border-black">—</td>
+        <td class="border border-black">—</td>
+        <td class="border border-black">—</td>
+      </tr>
+
+      <!-- Ligne Application (vide) -->
+      <tr>
+        <td class="border border-black text-right pr-2">Application :</td>
+        {% for p in periodes %}
+          <td class="border border-black">&nbsp;</td>
+        {% endfor %}
+        <td class="border border-black">—</td>
+        <td class="border border-black">—</td>
+        <td class="border border-black">—</td>
+        <td class="border border-black">—</td>
+        <td class="border border-black">—</td>
+      </tr>
+    </tfoot>
+
+  </table>
+
+  <div class="text-xs text-gray-700 mt-4">
+    <p>- L’élève passe dans la classe supérieure si la moyenne générale est ≥ 50 %.</p>
+    <p>- Ce bulletin est sans valeur s’il est raturé ou modifié.</p>
+  </div>
+</div>
+{% endblock %} {% endcomment %}
+
+
+{% comment %} {% extends "base.html" %}
+{% load static %}
+{% load custom_tags %}
+
+{% block title %}Bulletin de {{ eleve.nom }}{% endblock %}
+
+{% block content %}
+<div class="bulletin border border-gray-800 p-6 bg-white text-black max-w‑5xl mx-auto my‑8 shadow-lg">
+  <!-- En-tête -->
+  <div class="text-center mb‑4">
+    <h2 class="text-lg font-bold uppercase">République Démocratique du Congo</h2>
+    <h3 class="font-semibold text-sm">Ministère de l’Enseignement Primaire, Secondaire et Technique</h3>
+    <h4 class="mt‑2 font-semibold">{{ school.nom }} — Année scolaire : {{ school.annee_scolaire }}</h4>
+    <h4 class="font-semibold text-gray‑700">Classe : {{ classe.nom }}</h4>
+  </div>
+
+  <table class="w-full text-xs border border-black border-collapse text-center">
+    <thead>
+      <tr>
+        <th rowspan="{{ rowspan_branches }}" class="border border-black">BRANCHES</th>
+        {% for semestre in semestres %}
+          {% for p in periodes_par_semestre|get_item:semestre %}
+            <th class="border border-black">{{ p.nom }}</th>
+          {% endfor %}
+          <th class="border border-black">Tot. Sem</th>
+        {% endfor %}
+        <th class="border border-black">T.G</th>
+        <th class="border border-black">%</th>
+        <th class="border border-black">Sign. Prof</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <!-- Ligne MAXIMA -->
+      <tr class="font-semibold bg-gray-100">
+        <td class="border border-black text-left pl-2">MAXIMA</td>
+
+        {% for semestre in semestres %}
+          {% for p in periodes_par_semestre|get_item:semestre %}
+            <td class="border border-black">
+              {% with note_attendue_map|get_item:p as val %}
+                {% if val != None %}{{ val }}{% else %}-{% endif %}
+              {% endwith %}
+            </td>
+          {% endfor %}
+          <td class="border border-black">{{ totaux_semestre|get_item:semestre }}</td>
+        {% endfor %}
+
+        <td class="border border-black">{{ total_general_attendu }}</td>
+        <td class="border border-black">{{ pourcentage_global|floatformat:2 }} %</td>
+        <td class="border border-black">—</td>
+      </tr>
+
+      <!-- Lignes pour chaque matière -->
+      {% for matiere in matieres %}
+        <tr>
+          <td class="border border-black text-left pl-4">{{ matiere.nom }}</td>
+          {% for semestre in semestres %}
+            {% for p in periodes_par_semestre|get_item:semestre %}
+              <td class="border border-black">
+                {% with notes_by_matiere|get_item:matiere|get_item:p as note %}
+                  {% if note %}{{ note.note_obtenue }}{% else %}-{% endif %}
+                {% endwith %}
+              </td>
+            {% endfor %}
+            <td class="border border-black">
+              {% with total_mat_sem=0 %}
+                {% for p in periodes_par_semestre|get_item:semestre %}
+                  {% with notes_by_matiere|get_item:matiere|get_item:p as note %}
+                    {% if note %}
+                      {% widthratio note.note_obtenue 1 1 as note_val %}
+                      {% widthratio total_mat_sem|add:note_val 1 1 as total_mat_sem %}
+                    {% endif %}
+                  {% endwith %}
+                {% endfor %}
+                {{ total_mat_sem }}
+              {% endwith %}
+            </td>
+          {% endfor %}
+
+          <td class="border border-black">—</td>
+          <td class="border border-black">—</td>
+          <td class="border border-black">—</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+
+    <tfoot class="font-semibold bg-gray-200">
+      <!-- Ligne des Maximas généraux / Totaux / Pourcentage / Place / Application -->
+      <tr>
+        <td class="border border-black text-right pr-2">Maximas généraux :</td>
+        {% for p in periodes %}
+          <td class="border border-black">
+            {{ maxima_generaux|get_item:p|floatformat:2 }}
+          </td>
+        {% endfor %}
+        <td class="border border-black">—</td>
+        <td class="border border-black">{{ total_general_attendu|floatformat:2 }}</td>
+        <td class="border border-black">{{ pourcentage_total|floatformat:2 }} %</td>
+        <td class="border border-black">—</td>
+        <td class="border border-black">—</td>
+      </tr>
+
+      <!-- Ligne Totaux matières par période -->
+      <tr>
+        <td class="border border-black text-right pr-2">Totaux matières :</td>
+        {% for p in periodes %}
+          <td class="border border-black">
+            {{ total_periode_obtenu|get_item:p|floatformat:2 }}
+          </td>
+        {% endfor %}
+        <td class="border border-black">—</td>
+        <td class="border border-black">{{ total_obtenu|floatformat:2 }}</td>
+        <td class="border border-black">—</td>
+        <td class="border border-black">—</td>
+        <td class="border border-black">—</td>
+      </tr>
+
+      <!-- Ligne Pourcentage par période -->
+      <tr>
+        <td class="border border-black text-right pr-2">Pourcentage périodique :</td>
+        {% for p in periodes %}
+          <td class="border border-black">
+            {{ pourcentage_periode|get_item:p|floatformat:2 }}%
+          </td>
+        {% endfor %}
+        <td class="border border-black">—</td>
+        <td class="border border-black">{{ pourcentage_total|floatformat:2 }} %</td>
+        <td class="border border-black">—</td>
+        <td class="border border-black">—</td>
+        <td class="border border-black">—</td>
+      </tr>
+
+      <!-- Ligne Place / Nbre élèves par période -->
+      <tr>
+        <td class="border border-black text-right pr-2">Place / Nbre élèves :</td>
+        {% for p in periodes %}
+          <td class="border border-black">
+            {{ rang_par_periode|get_item:p }}
+          </td>
+        {% endfor %}
+        <td class="border border-black">—</td>
+        <td class="border border-black">—</td>
+        <td class="border border-black">—</td>
+        <td class="border border-black">—</td>
+        <td class="border border-black">—</td>
+      </tr>
+
+      <!-- Ligne Application (vide) -->
+      <tr>
+        <td class="border border-black text-right pr-2">Application :</td>
+        {% for p in periodes %}
+          <td class="border border-black">&nbsp;</td>
+        {% endfor %}
+        <td class="border border-black">—</td>
+        <td class="border border-black">—</td>
+        <td class="border border-black">—</td>
+        <td class="border border-black">—</td>
+        <td class="border border-black">—</td>
+      </tr>
+    </tfoot>
+
+  </table>
+
+  <div class="text-xs text-gray-700 mt-4">
+    <p>- L’élève passe dans la classe supérieure si la moyenne générale est ≥ 50 %.</p>
+    <p>- Ce bulletin est sans valeur s’il est raturé ou modifié.</p>
+  </div>
+</div>
+{% endblock %}  {% endcomment %}
+
+
+{% comment %} {% extends "base.html" %}
+{% load static %}
+{% load custom_tags %}
+
+{% block title %}Bulletin de {{ eleve.nom }}{% endblock %}
+
+{% block content %}
+<div class="bulletin border border-gray-800 p-6 bg-white text-black max-w‑5xl mx-auto my‑8 shadow-lg">
+  <!-- En-tête -->
+  <div class="text-center mb‑4">
+    <h2 class="text-lg font-bold uppercase">République Démocratique du Congo</h2>
+    <h3 class="font-semibold text-sm">Ministère de l’Enseignement Primaire, Secondaire et Technique</h3>
+    <h4 class="mt‑2 font-semibold">{{ school.nom }} — Année scolaire : {{ school.annee_scolaire }}</h4>
+    <h4 class="font-semibold text-gray‑700">Classe : {{ classe.nom }}</h4>
+  </div>
+
+  <table class="w-full text-xs border border-black border-collapse text-center">
+    <thead>
+      <tr>
+        <th rowspan="{{ rowspan_branches }}" class="border border-black">BRANCHES</th>
+        {% for semestre in semestres %}
+          {% for p in periodes_par_semestre|get_item:semestre %}
+            <th class="border border-black">{{ p.nom }}</th>
+          {% endfor %}
+          <th class="border border-black">Tot. Sem</th>
+        {% endfor %}
+        <th class="border border-black">T.G</th>
+        <th class="border border-black">%</th>
+        <th class="border border-black">Sign. Prof</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <!-- Ligne MAXIMA -->
+      <tr class="font-semibold bg-gray-100">
+        <td class="border border-black text-left pl-2">MAXIMA</td>
+
+        {% for semestre in semestres %}
+          {% for p in periodes_par_semestre|get_item:semestre %}
+            <td class="border border-black">
+              {% with note_attendue_map|get_item:p as val %}
+                {% if val != None %}{{ val }}{% else %}-{% endif %}
+              {% endwith %}
+            </td>
+          {% endfor %}
+          <td class="border border-black">{{ totaux_semestre|get_item:semestre }}</td>
+        {% endfor %}
+
+        <td class="border border-black">{{ total_general_attendu }}</td>
+        <td class="border border-black">{{ pourcentage_global|floatformat:2 }} %</td>
+        <td class="border border-black">—</td>
+      </tr>
+
+      <!-- Lignes pour chaque matière -->
+      {% for matiere in matieres %}
+        <tr>
+          <td class="border border-black text-left pl-4">{{ matiere.nom }}</td>
+          {% for semestre in semestres %}
+            {% for p in periodes_par_semestre|get_item:semestre %}
+              <td class="border border-black">
+                {% with notes_by_matiere|get_item:matiere|get_item:p as note %}
+                  {% if note %}{{ note.note_obtenue }}{% else %}-{% endif %}
+                {% endwith %}
+              </td>
+            {% endfor %}
+            <td class="border border-black">
+              {% with total_mat_sem=0 %}
+                {% for p in periodes_par_semestre|get_item:semestre %}
+                  {% with notes_by_matiere|get_item:matiere|get_item:p as note %}
+                    {% if note %}
+                      {% widthratio note.note_obtenue 1 1 as note_val %}
+                      {% widthratio total_mat_sem|add:note_val 1 1 as total_mat_sem %}
+                    {% endif %}
+                  {% endwith %}
+                {% endfor %}
+                {{ total_mat_sem }}
+              {% endwith %}
+            </td>
+          {% endfor %}
+
+          <td class="border border-black">—</td>
+          <td class="border border-black">—</td>
+          <td class="border border-black">—</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="text-xs text-gray-700 mt-4">
+    <p>- L’élève passe dans la classe supérieure si la moyenne générale est ≥ 50 %.</p>
+    <p>- Ce bulletin est sans valeur s’il est raturé ou modifié.</p>
+  </div>
+</div>
+{% endblock %} {% endcomment %}
+
+
+
+
+{% comment %} {% extends "base.html" %}
+{% load static %}
+{% load custom_tags %}
+
+{% block title %}Bulletin de {{ eleve.nom }}{% endblock %}
+
+{% block content %}
+<div class="bulletin border border-gray-800 p-6 bg-white text-black max-w‑5xl mx-auto my‑8 shadow-lg">
+  <!-- EN‑TÊTE -->
+  <div class="text-center mb‑4">
+    <h2 class="text-lg font-bold uppercase">République Démocratique du Congo</h2>
+    <h3 class="font-semibold text-sm">Ministère de l’Enseignement Primaire, Secondaire et Technique</h3>
+    <h4 class="mt‑2 font-semibold">{{ school.nom }} — Année scolaire : {{ school.annee_scolaire }}</h4>
+    <h4 class="font-semibold text-gray‑700">Classe : {{ classe.nom }}</h4>
+  </div>
+
+  <table class="w-full text-xs border border-black border-collapse text-center">
+    <thead>
+      <tr>
+        <th rowspan="{{ rowspan_branches }}" class="border border-black">BRANCHES</th>
+        {% for periode in periodes %}
+          <th class="border border-black">{{ periode.nom }}</th>
+        {% endfor %}
+        <th class="border border-black">Tot.</th>
+        <th class="border border-black">T.G</th>
+        <th class="border border-black">%</th>
+        <th class="border border-black">Sign. Prof</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      {# Ligne pour les maximas (une seule ligne) #}
+      <tr class="font-semibold bg-gray‑100">
+        <td class="border border-black text-left pl‑2">MAXIMA</td>
+        {% for periode in periodes %}
+          <td class="border border-black">
+            {% with note_attendue_map|get_item:periode as val %}
+              {% if val != None %}{{ val }}{% else %}-{% endif %}
+            {% endwith %}
+          </td>
+        {% endfor %}
+        <td class="border border-black">
+          {# Total des notes attendues de tous les maximas #}
+          {{ total_attendu }}
+        </td>
+        <td class="border border-black">{{ total_obtenu }}</td>
+        <td class="border border-black">{{ pourcentage_global|floatformat:2 }} %</td>
+        <td class="border border-black">—</td>
+      </tr>
+
+      {# Lignes pour chaque matière #}
+      {% for matiere in matieres %}
+        <tr>
+          <td class="border border-black text-left pl‑4">{{ matiere.nom }}</td>
+          {% for periode in periodes %}
+            <td class="border border-black">
+              {% with notes_by_matiere|get_item:matiere|get_item:periode as note %}
+                {% if note %}{{ note.note_obtenue }}{% else %}-{% endif %}
+              {% endwith %}
+            </td>
+          {% endfor %}
+          <td class="border border-black">
+            {% with total_mat=0 %}
+              {% for periode in periodes %}
+                {% with notes_by_matiere|get_item:matiere|get_item:periode as note %}
+                  {% if note %}
+                    {% widthratio note.note_obtenue 1 1 as note_val %}
+                    {% widthratio total_mat|add:note_val 1 1 as total_mat %}
+                  {% endif %}
+                {% endwith %}
+              {% endfor %}
+              {{ total_mat }}
+            {% endwith %}
+          </td>
+          <td class="border border-black">—</td>
+          <td class="border border-black">—</td>
+          <td class="border border-black">—</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="text-xs text-gray‑700 mt‑4">
+    <p>- L’élève passe dans la classe supérieure si la moyenne générale est ≥ 50 %.</p>
+    <p>- Ce bulletin est sans valeur s’il est raturé ou modifié.</p>
+  </div>
+</div>
+{% endblock %} {% endcomment %}
+
+
+
+
+{% comment %} {% extends "base.html" %}
+{% load static %}
+{% load custom_tags %}
+
+{% block title %}Bulletin de {{ eleve.nom }}{% endblock %}
+
+{% block content %}
+<div class="bulletin border border-gray-800 p-6 bg-white text-black max‑w‑5xl mx-auto my‑8 shadow-lg">
+  <!-- EN‑TÊTE -->
+  <div class="text-center mb‑4">
+    <h2 class="text-lg font-bold uppercase">République Démocratique du Congo</h2>
+    <h3 class="font-semibold text-sm">Ministère de l’Enseignement Primaire, Secondaire et Technique</h3>
+    <h4 class="mt‑2 font-semibold">{{ school.nom }} — Année scolaire : {{ school.annee_scolaire }}</h4>
+    <h4 class="font-semibold text-gray‑700">Classe : {{ classe.nom }}</h4>
+  </div>
+
+  <table class="w-full text-xs border border-black border-collapse text-center">
+    <thead>
+      <tr>
+        <th rowspan="3" class="border border-black">BRANCHES</th>
+        {% for semestre in semestres %}
+          <th colspan="{{ periodes|length|add:'1' }}" class="border border-black">{{ semestre.nom|upper }}</th>
+        {% endfor %}
+        <th rowspan="3" class="border border-black">T.G</th>
+        <th colspan="2" rowspan="2" class="border border-black">EXAMEN DE REPÊCHAGE</th>
+      </tr>
+      <tr>
+        {% for semestre in semestres %}
+          {% for periode in periodes %}
+            <th class="border border-black">{{ periode.nom }}</th>
+          {% endfor %}
+          <th class="border border-black">Tot.</th>
+        {% endfor %}
+      </tr>
+      <tr>
+        {% for semestre in semestres %}
+          {% for periode in periodes %}
+            <th class="border border-black">Note</th>
+          {% endfor %}
+          <th class="border border-black">/Max</th>
+        {% endfor %}
+        <th class="border border-black">%</th>
+        <th class="border border-black">Sign. Prof</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      {% for semestre, maximas_bloc in bulletin_data.items %}
+        {% for maxima, bloc in maximas_bloc.items %}
+          <tr class="font-semibold bg-gray‑100">
+            <td class="border border-black text-left pl-2">MAXIMA :</td>
+            {% for periode in periodes %}
+              <td class="border border-black">
+                {% with bloc.note_attendue_map|get_item:periode as val %}
+                  {% if val %}{{ val }}{% else %}-{% endif %}
+                {% endwith %}
+              </td>
+            {% endfor %}
+            <td class="border border-black">{{ maxima.note_attendue }}</td>
+            {% if forloop.first %}
+              <td class="border border-black" rowspan="{{ maximas_bloc|length }}">—</td>
+              <td class="border border-black" rowspan="{{ maximas_bloc|length }}">—</td>
+            {% endif %}
+          </tr>
+          {% for matiere, notes in bloc.matieres.items %}
+            <tr>
+              <td class="border border-black text-left pl-4">{{ matiere.nom }}</td>
+              {% for periode in periodes %}
+                {% with notes|get_item:periode as note %}
+                  <td class="border border-black">
+                    {% if note %}{{ note.note_obtenue }}{% else %}-{% endif %}
+                  </td>
+                {% endwith %}
+              {% endfor %}
+              <td class="border border-black">
+                {% with total=0 %}
+                  {% for periode in periodes %}
+                    {% with notes|get_item:periode as note %}
+                      {% if note %}
+                        {% widthratio note.note_obtenue 1 1 as note_val %}
+                        {% widthratio total|add:note_val 1 1 as total %}
+                      {% endif %}
+                    {% endwith %}
+                  {% endfor %}
+                  {{ total }}
+                {% endwith %}
+              </td>
+              <td class="border border-black">—</td>
+              <td class="border border-black">—</td>
+            </tr>
+          {% endfor %}
+        {% endfor %}
+      {% endfor %}
+    </tbody>
+
+    <tfoot class="font-semibold bg-gray‑200">
+      <tr>
+        <td class="border border-black text-right pr‑2">TOTAL GÉNÉRAL :</td>
+        <td colspan="{{ semestres|length|add:periodes|length }}" class="border border-black">{{ total_general_obtenu }}</td>
+        <td class="border border-black">{{ total_general_attendu }}</td>
+        <td class="border border-black">{{ pourcentage_global|floatformat:2 }}%</td>
+        <td class="border border-black">—</td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <div class="text-xs text-gray‑700 mt‑4">
+    <p>- L’élève passe dans la classe supérieure si la moyenne générale est ≥ 50 %.</p>
+    <p>- Ce bulletin est sans valeur s’il est raturé ou modifié.</p>
+  </div>
+</div>
+{% endblock %} {% endcomment %}

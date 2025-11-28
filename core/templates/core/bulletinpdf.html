@@ -1,0 +1,128 @@
+{% load custom_filters %}
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bulletin scolaire RDC</title>
+<style>
+  body { font-family: "Times New Roman", serif; background: #fff; margin: 20px; }
+  .bulletin { width: 1024px; margin: auto; border: 2px solid #000; padding: 8px; }
+  .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 4px; }
+  .header h1, .header h2 { margin: 2px 0; font-size: 14px; }
+  .top-line { border: 1px solid #000; padding: 2px; margin: 5px 0; }
+  .info { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; font-size: 13px; }
+  table { border-collapse: collapse; width: 100%; margin-top: 8px; font-size: 12px; text-align: center; }
+  th, td { border: 1px solid #000; padding: 3px; }
+  th { background: #eee; font-weight: bold; }
+  .section-title { font-weight: bold; background: #f5f5f5; text-align: left; }
+  .signatures { display: flex; justify-content: space-between; margin-top: 15px; font-size: 12px; }
+  .signature-box { width: 30%; text-align: center; }
+  .note { font-size: 11px; margin-top: 10px; }
+  .center { text-align: center; }
+  @media print { body { margin: 0; } }
+</style>
+</head>
+<body>
+<div class="bulletin">
+
+  <!-- HEADER -->
+  <div class="header">
+    <h1>RÉPUBLIQUE DÉMOCRATIQUE DU CONGO</h1>
+    <h2>MINISTÈRE DE L’ENSEIGNEMENT PRIMAIRE, SECONDAIRE ET PROFESSIONNEL</h2>
+  </div>
+
+  <!-- Infos -->
+  <div class="top-line"><b>N° ID :</b> __________________________</div>
+  <div class="info">
+    <div>ÉCOLE : {{ eleve.classe.ecole.nom|default:"................................" }}</div>
+    <div>ÉLÈVE : {{ eleve.nom }} SEXE : {{ eleve.sexe|default:"...." }}</div>
+    <div>VILLE : {{ eleve.ville|default:"................................" }}</div>
+    <div>NÉ(E) À : {{ eleve.lieu_naissance|default:".................." }} le {{ eleve.date_naissance|date:"d/m/Y"|default:"../../...." }}</div>
+    <div>COMMUNE/TER (1) : {{ eleve.commune|default:"................................" }}</div>
+    <div>CLASSE : {{ eleve.classe.nom|default:"................................" }}</div>
+    <div>CODE : [ _ _ _ _ _ _ ]</div>
+    <div>N° PERM. : [ _ _ _ _ _ _ ]</div>
+  </div>
+
+  <h3 class="center" style="margin-top:10px;">BULLETIN DE LA {{ eleve.classe.nom }} ANNÉE PÉDAGOGIQUE GÉNÉRALE — ANNÉE SCOLAIRE 20.... - 20....</h3>
+
+  <!-- TABLEAU -->
+  <table>
+    <tr>
+      <th rowspan="3">BRANCHES</th>
+      {% for semestre in semestres %}
+        <th colspan="{{ semestre.maximas.count|add:'1' }}">SEMESTRE {{ forloop.counter }}</th>
+      {% endfor %}
+      <th rowspan="3">TOT GÉN</th>
+      <th rowspan="3">EXAMEN DE REPÊCHAGE</th>
+      <th rowspan="3">% / Sign. Prof</th>
+    </tr>
+
+    <tr>
+      {% for semestre in semestres %}
+        {% for maxima in semestre.maximas.all %}
+          <th>{{ maxima.periode_primaire.nom|default:maxima.periode_secondaire.nom|default:"Période" }}</th>
+        {% endfor %}
+        <th>Tot</th>
+      {% endfor %}
+    </tr>
+
+    <!-- MAXIMAS PAR MATIERE -->
+    {% for matiere in matieres %}
+<tr>
+  <td>{{ matiere.nom }}</td>
+  {% for semestre in semestres %}
+    {% for maxima in semestre.maximas.all %}
+      <td>{{ notations_par_matiere|dict_get:matiere.id|dict_get:maxima.id|default:"0" }}</td>
+    {% endfor %}
+  {% endfor %}
+  <td>{{ pourcentage_total|floatformat:2 }}%</td>
+</tr>
+{% endfor %}
+
+    <!-- MAXIMA GENERAUX -->
+    <tr>
+      <td class="section-title">MAXIMA GÉNÉRAUX</td>
+      {% for semestre in semestres %}
+        {% with total_semestre=0 %}
+        {% for maxima in semestre.maximas.all %}
+          <td>{{ maxima.note_attendue }}</td>
+          {% with total_semestre=total_semestre|add:maxima.note_attendue %}{% endwith %}
+        {% endfor %}
+        <td>{{ total_semestre }}</td>
+        {% endwith %}
+      {% endfor %}
+      <td>{{ note_attendue_total }}</td>
+      <td></td>
+      <td></td>
+    </tr>
+
+  </table>
+
+  <!-- SIGNATURES -->
+  <div class="signatures">
+    <div class="signature-box">
+      Signature de l’élève <br><br> __________________
+    </div>
+    <div class="signature-box">
+      Sceau de l’école
+    </div>
+    <div class="signature-box">
+      Le Chef d’établissement <br><br> __________________
+    </div>
+  </div>
+
+  <div class="note">
+    * L’élève ne pourra passer dans la classe supérieure s’il n’a subi avec succès un examen de repêchage.<br>
+    * L’élève passe dans la classe supérieure (1).<br>
+    * L’élève double la classe (1).<br>
+    * L’élève a échoué et est à réorienter vers ……………………………(1).<br>
+    <br>
+    Fait à .................................................., le ...... / ...... / 20.....<br><br>
+    <b>NOTE IMPORTANTE :</b> le bulletin est sans valeur s’il est raturé ou surchargé.
+  </div>
+</div>
+</body>
+</html>

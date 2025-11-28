@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+{% load custom_tags %}
+
+{% block title %}Détails de la Période{% endblock %}
+
+{% block content %}
+<div class="bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+    <h1 class="text-4xl font-semibold text-white text-center mb-8">Détails de la Période : {{ periode.nom }}</h1>
+
+    <!-- Informations de l'élève -->
+    <div class="bg-gray-800 rounded-lg shadow-lg p-8 mb-8 flex flex-col md:flex-row gap-6 items-start">
+    
+        <!-- Avatar -->
+        <div class="flex-shrink-0">
+            {% if eleve.image_profil %}
+                <img src="{{ eleve.image_profil.url }}" 
+                     alt="{{ eleve.nom }}" 
+                     class="w-24 h-24 rounded-full object-cover cursor-pointer"
+                     onclick="openProfileModal('{{ eleve.image_profil.url }}')">
+            {% else %}
+                <img src="https://bootdey.com/img/Content/avatar/avatar7.png" 
+                     alt="Avatar" 
+                     class="w-24 h-24 rounded-full object-cover cursor-pointer"
+                     onclick="openProfileModal('https://bootdey.com/img/Content/avatar/avatar7.png')">
+            {% endif %}
+        </div>
+    
+        <!-- Informations personnelles -->
+        <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <p class="text-lg text-gray-300"><strong>Nom Complet :</strong> {{ eleve.nom }}</p>
+                <p class="text-lg text-gray-300"><strong>École :</strong> {{ eleve.school.nom}}</p>
+                {% if eleve.email %}
+                    <p class="text-lg text-gray-300"><strong>Email :</strong> {{ eleve.email }}</p>
+                {% endif %}
+                <p class="text-lg text-gray-300"><strong>Classe :</strong> {{ eleve.classe.nom }}</p>
+                {% if eleve.age %}
+                    <p class="text-lg text-gray-300"><strong>Âge :</strong> {{ eleve.age }} ans</p>
+                {% endif %}
+            </div>
+            <div>
+                {% if eleve.adresse %}
+                    <p class="text-lg text-gray-300"><strong>Adresse :</strong> {{ eleve.adresse }}</p>
+                {% endif %}
+                {% if eleve.telephone %}
+                    <p class="text-lg text-gray-300"><strong>Téléphone :</strong> {{ eleve.telephone }}</p>
+                {% endif %}
+                {% if eleve.date_inscription %}
+                    <p class="text-lg text-gray-300"><strong>Date d'Inscription :</strong> {{ eleve.date_inscription|date:"d M Y" }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    {% comment %} <div class="bg-gray-800 rounded-lg shadow-lg p-8 mb-8">
+        <h2 class="text-2xl font-semibold text-white mb-4">Informations sur l'Élève</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                
+                <p class="text-lg text-gray-300"><strong>Nom Complet :</strong> {{ eleve.nom }} {{ eleve.prenom }}</p>
+                <p class="text-lg text-gray-300"><strong>Ecole :</strong> {{ eleve.school.nom }}</p>
+                <p class="text-lg text-gray-300"><strong>Classe :</strong> {{ eleve.classe.nom }}</p>
+            </div>
+        </div>
+    </div> {% endcomment %}
+
+    <!-- Détails des Notations par Période -->
+    <div class="bg-gray-800 rounded-lg shadow-lg p-8">
+        <h2 class="text-2xl font-semibold text-white mb-4">Détails des Notations de la Période</h2>
+
+        <!-- Moyenne Attendue et Moyenne Obtenue -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div>
+                <p class="text-lg text-gray-300"><strong>Moyenne Attendue :</strong> {{ total_attendu }}</p>
+            </div>
+            <div>
+                {% if total_obtenu < total_attendu|floatdivide:2 %}
+                    <p class="text-lg text-red-500 font-bold"><strong>Moyenne Obtenue :</strong> {{ total_obtenu }}</p>
+                {% else %}
+                    <p class="text-lg text-gray-300"><strong>Moyenne Obtenue :</strong> {{ total_obtenu }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Pourcentage -->
+        <div class="mb-6">
+            {% if pourcentage < 50 %}
+                <h3 class="text-xl text-red-500 font-bold mb-4">Pourcentage : {{ pourcentage|floatformat:2 }}%</h3>
+            {% else %}
+                <h3 class="text-xl text-indigo-500 mb-4">Pourcentage : {{ pourcentage|floatformat:2 }}%</h3>
+            {% endif %}
+        </div>
+
+        <!-- Liste des Notations -->
+        <h4 class="text-lg text-white font-semibold mb-4">Détails des Notations</h4>
+        <table class="min-w-full text-left text-gray-300">
+            <thead>
+                <tr>
+                    <th class="px-4 py-2">Matière</th>
+                    <th class="px-4 py-2">Note Attendue</th>
+                    <th class="px-4 py-2">Note Obtenue</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for notation in notations %}
+                <tr class="border-t border-gray-600">
+                    <td class="px-4 py-2">
+                        {% if eleve.classe.school.type_ecole == "primaire" %}
+                            <a href="{% url 'detail_epreuve_eleve' notation.eleve.id notation.matiere.id notation.periode_primaire.id %}" 
+                               class="text-blue-400 hover:underline">
+                                {{ notation.matiere.nom }}
+                            </a>
+                        {% else %}
+                            <a href="{% url 'detail_epreuve_eleve' notation.eleve.id notation.matiere.id notation.periode_secondaire.id %}" 
+                               class="text-blue-400 hover:underline">
+                                {{ notation.matiere.nom }}
+                            </a>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-2">{{ notation.note_attendue }}</td>
+                    {% with seuil=notation.note_attendue|floatdivide:2 %}
+                        {% if notation.note_obtenue < seuil %}
+                            <td class="px-4 py-2 text-red-500 font-bold">{{ notation.note_obtenue }}</td>
+                        {% else %}
+                            <td class="px-4 py-2">{{ notation.note_obtenue }}</td>
+                        {% endif %}
+                    {% endwith %}
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3" class="text-center text-gray-400 py-4">Aucune notation pour cette période.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+    </div>
+
+    <!-- Retour à la liste des élèves -->
+    <div class="mt-6 text-center">
+        <a href="{% url 'periode_eleve_pdf' eleve.id periode.id %}" 
+           class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition duration-200">
+            Télécharger en pdf 
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+
+
+{% comment %} {% extends "base.html" %}
+{% load custom_tags %}
+
+{% block title %}Détails de la Période{% endblock %}
+
+{% block content %}
+<div class="bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+    <h1 class="text-4xl font-semibold text-white text-center mb-8">Détails de la Période : {{ periode.nom }}</h1>
+
+    <!-- Informations de l'élève -->
+    <div class="bg-gray-800 rounded-lg shadow-lg p-8 mb-8">
+        <h2 class="text-2xl font-semibold text-white mb-4">Informations sur l'Élève</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <p class="text-lg text-gray-300"><strong>Nom Complet :</strong> {{ eleve.nom }} {{ eleve.prenom }}</p>
+                
+                <p class="text-lg text-gray-300"><strong>Classe :</strong> {{ eleve.classe.nom }}</p>
+               
+            </div>
+        </div>
+    </div>
+
+    <!-- Détails des Notations par Période -->
+    <div class="bg-gray-800 rounded-lg shadow-lg p-8">
+        <h2 class="text-2xl font-semibold text-white mb-4">Détails des Notations de la Période</h2>
+
+        <!-- Moyenne Attendue et Moyenne Obtenue -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div>
+                <p class="text-lg text-gray-300"><strong>Moyenne Attendue :</strong> {{ total_attendu }}</p>
+            </div>
+            <div>
+                {% if total_obtenu < total_attendu|floatdivide:2 %}
+                    <p class="text-lg text-red-500 font-bold"><strong>Moyenne Obtenue :</strong> {{ total_obtenu }}</p>
+                {% else %}
+                    <p class="text-lg text-gray-300"><strong>Moyenne Obtenue :</strong> {{ total_obtenu }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Pourcentage -->
+        <div class="mb-6">
+            {% if pourcentage < 50 %}
+                <h3 class="text-xl text-red-500 font-bold mb-4">Pourcentage : {{ pourcentage|floatformat:2 }}%</h3>
+            {% else %}
+                <h3 class="text-xl text-indigo-500 mb-4">Pourcentage : {{ pourcentage|floatformat:2 }}%</h3>
+            {% endif %}
+        </div>
+
+        <!-- Liste des Notations -->
+        <h4 class="text-lg text-white font-semibold mb-4">Détails des Notations</h4>
+        <table class="min-w-full text-left text-gray-300">
+            <thead>
+                <tr>
+                    <th class="px-4 py-2">Matière</th>
+                    <th class="px-4 py-2">Note Attendue</th>
+                    <th class="px-4 py-2">Note Obtenue</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for notation in notations %}
+                <tr class="border-t border-gray-600">
+                    <td class="px-4 py-2">
+                        <a href="{% url 'detail_epreuve_eleve' notation.eleve.id notation.matiere.id notation.periode.id %}"
+                           class="text-blue-400 hover:underline">
+                           {{ notation.matiere.nom }}
+                        </a>
+                    </td>                    
+                    <td class="px-4 py-2">{{ notation.note_attendue }}</td>
+                    {% with seuil=notation.note_attendue|floatdivide:2 %}
+                        {% if notation.note_obtenue < seuil %}
+                            <td class="px-4 py-2 text-red-500 font-bold">{{ notation.note_obtenue }}</td>
+                        {% else %}
+                            <td class="px-4 py-2">{{ notation.note_obtenue }}</td>
+                        {% endif %}
+                    {% endwith %}
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3" class="text-center text-gray-400 py-4">Aucune notation pour cette période.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+    </div>
+
+    <!-- Retour à la liste des élèves -->
+    <div class="mt-6 text-center">
+        <a href="{% url 'periode_eleve_pdf' eleve.id periode.id %}" 
+           class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition duration-200">
+            Télécharger en pdf 
+        </a>
+    </div>
+</div>
+{% endblock %} {% endcomment %}

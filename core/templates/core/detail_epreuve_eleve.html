@@ -1,0 +1,324 @@
+{% extends "base.html" %}
+{% load custom_tags %}
+{% block title %}Épreuves - {{ eleve.nom }}{% endblock %}
+
+{% block content %}
+<div class="bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-5xl mx-auto bg-gray-800 rounded-lg shadow-lg p-8">
+        <h2 class="text-3xl font-semibold text-center text-white mb-6">
+            Épreuves pour {{ eleve.nom }} – {{ matiere.nom }} – {{ periode.nom }}
+        </h2>
+
+        <p class="text-gray-300 text-center mb-4">
+            Professeur : <strong>{{ matiere.prof.get_full_name }}</strong>
+        </p>
+
+        {% if epreuves %}
+        <form method="POST">
+            {% csrf_token %}
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                {% for ne in epreuves %}
+                <div class="bg-gray-800 p-4 rounded-lg shadow-lg text-white">
+                    <h4 class="text-lg font-semibold mb-2">
+                        {{ ne.epreuve.nom }} du
+                        <span class="text-gray-300 text-sm">({{ ne.epreuve.date|date:"d/m/Y" }})</span>
+                    </h4>
+                    <p>Note attendue : {{ ne.epreuve.note_attendue }}</p>
+                    <p>
+                        Note obtenue : 
+                        {% if request.user == matiere.prof %}
+                            <input type="number" step="0.01" min="0" name="note_obtenue_{{ ne.id }}" 
+                                   value="{{ ne.note|default_if_none:'' }}" 
+                                   class="w-24 px-2 py-1 rounded-md text-gray-900">
+                            {% if ne.note is not None %}
+                                {% if ne.note < ne.epreuve.note_attendue|floatdivide:2 %}
+                                    <span class="ml-2 text-red-500 font-bold">(Actuelle : {{ ne.note }})</span>
+                                {% else %}
+                                    <span class="ml-2 text-gray-300">(Actuelle : {{ ne.note }})</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="ml-2 text-gray-500">(Non encore remplie)</span>
+                            {% endif %}
+                        {% else %}
+                            {% if ne.note is not None %}
+                                {% if ne.note < ne.epreuve.note_attendue|floatdivide:2 %}
+                                    <span class="ml-2 text-red-500 font-bold">{{ ne.note }}</span>
+                                {% else %}
+                                    <span class="ml-2 text-gray-300">{{ ne.note }}</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="ml-2 text-gray-500">(Non encore remplie)</span>
+                            {% endif %}
+                        {% endif %}
+                    </p>
+                </div>
+                {% endfor %}
+            </div>
+
+            {% if request.user == matiere.prof %}
+            <div class="mt-6 text-center">
+                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg">
+                    Enregistrer les notes
+                </button>
+            </div>
+            {% endif %}
+        </form>
+        {% else %}
+        <p class="text-gray-400 text-center mt-6">Aucune épreuve disponible pour cette période.</p>
+        {% endif %}
+
+        
+    </div>
+</div>
+{% endblock %}
+
+
+
+{% comment %} {% extends "base.html" %}
+{% block title %}Épreuves - {{ eleve.nom }}{% endblock %}
+
+{% block content %}
+<div class="bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-5xl mx-auto bg-gray-800 rounded-lg shadow-lg p-8">
+        <h2 class="text-3xl font-semibold text-center text-white mb-6">
+            Épreuves pour {{ eleve.nom }} – {{ matiere.nom }} – {{ periode.nom }}
+        </h2>
+
+        <p class="text-gray-300 text-center mb-4">
+            Professeur : <strong>{{ matiere.prof.get_full_name }}</strong>
+        </p>
+
+        {% if epreuves %}
+        <form method="POST">
+            {% csrf_token %}
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                {% for ne in epreuves %}
+                <div class="bg-gray-800 p-4 rounded-lg shadow-lg text-white">
+                    <h4 class="text-lg font-semibold mb-2">
+                        {{ ne.epreuve.nom }} 
+                        <span class="text-gray-300 text-sm">({{ ne.epreuve.date|date:"d/m/Y" }})</span>
+                    </h4>
+                    <p>Note attendue : {{ ne.epreuve.note_attendue }}</p>
+                    <p>
+                        Note obtenue : 
+                        {% if request.user == matiere.prof %}
+                            <input type="number" step="0.01" min="0" name="note_obtenue_{{ ne.id }}" 
+                                   value="{{ ne.note|default_if_none:'' }}" 
+                                   class="w-24 px-2 py-1 rounded-md text-gray-900">
+                            {% if ne.note is not None %}
+                                <span class="ml-2 text-gray-300">(Actuelle : {{ ne.note }})</span>
+                            {% else %}
+                                <span class="ml-2 text-gray-500">(Non encore remplie)</span>
+                            {% endif %}
+                        {% else %}
+                            {% if ne.note is not None %}
+                                <span class="ml-2 text-gray-300">{{ ne.note }}</span>
+                            {% else %}
+                                <span class="ml-2 text-gray-500">(Non encore remplie)</span>
+                            {% endif %}
+                        {% endif %}
+                    </p>
+                    
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="mt-6 text-center">
+                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg">
+                    Enregistrer les notes
+                </button>
+            </div>
+        </form>
+        {% else %}
+        <p class="text-gray-400 text-center mt-6">Aucune épreuve disponible pour cette période.</p>
+        {% endif %}
+
+        <div class="mt-6 text-center">
+            <a href="{% url 'periode_detail' matiere.id periode.id %}" class="text-indigo-400 hover:underline">
+                ← Retour à la période
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %} {% endcomment %}
+
+
+{% comment %} {% extends "base.html" %}
+{% block title %}Épreuves - {{ eleve.nom }}{% endblock %}
+
+{% block content %}
+<div class="bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-5xl mx-auto bg-gray-800 rounded-lg shadow-lg p-8">
+        <h2 class="text-3xl font-semibold text-center text-white mb-6">
+            Épreuves pour {{ eleve.nom }} – {{ matiere.nom }} – {{ periode.nom }}
+        </h2>
+
+        <p class="text-gray-300 text-center mb-4">
+            Professeur : <strong>{{ matiere.prof.get_full_name }}</strong>
+        </p>
+
+        {% if epreuves %}
+        <form method="POST">
+            {% csrf_token %}
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                {% for e in epreuves %}
+                <div class="bg-gray-800 p-4 rounded-lg shadow-lg text-white">
+                    <h4 class="text-lg font-semibold mb-2">
+                        {{ e.epreuve.nom_epreuve }} 
+                        <span class="text-gray-300 text-sm">({{ e.epreuve.date_epreuve|date:"d/m/Y" }})</span>
+                    </h4>
+                    <p>Note attendue : {{ e.epreuve.note_epreuve_attendue }}</p>
+                    <p>
+                        Note obtenue :
+                        <input type="number" step="0.01" min="0" name="note_obtenue_{{ e.id }}" 
+                               value="{{ e.note|default:'' }}" 
+                               class="w-24 px-2 py-1 rounded-md text-gray-900">
+                        {% if e.note %}
+                            <span class="ml-2 text-gray-300">(Actuelle : {{ e.note }})</span>
+                        {% else %}
+                            <span class="ml-2 text-gray-500">(Non encore remplie)</span>
+                        {% endif %}
+                    </p>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="mt-6 text-center">
+                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg">
+                    Enregistrer les notes
+                </button>
+            </div>
+        </form>
+        {% else %}
+        <p class="text-gray-400 text-center mt-6">Aucune épreuve disponible pour cette période.</p>
+        {% endif %}
+
+        <div class="mt-6 text-center">
+            <a href="{% url 'periode_detail' matiere.id periode.id %}" class="text-indigo-400 hover:underline">
+                ← Retour à la période
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %} {% endcomment %}
+
+
+
+{% comment %} {% extends "base.html" %}
+{% block title %}Épreuves - {{ eleve.nom }}{% endblock %}
+
+{% block content %}
+<div class="bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-5xl mx-auto bg-gray-800 rounded-lg shadow-lg p-8">
+        <h2 class="text-3xl font-semibold text-center text-white mb-6">
+            Épreuves pour {{ eleve.nom }} – {{ matiere.nom }} – {{ periode.nom }}
+        </h2>
+
+        <p class="text-gray-300 text-center mb-4">
+            Professeur : <strong>{{ matiere.prof.get_full_name }}</strong>
+        </p>
+
+        {% if epreuves %}
+        <form method="POST">
+            {% csrf_token %}
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                {% for e in epreuves %}
+                <div class="bg-gray-800 p-4 rounded-lg shadow-lg text-white">
+                    <h4 class="text-lg font-semibold mb-2">
+                        {{ e.nom_epreuve }} 
+                        <span class="text-gray-300 text-sm">({{ e.date_epreuve|date:"d/m/Y" }})</span>
+                    </h4>
+                    <p>Note attendue : {{ e.note_epreuve_attendue }}</p>
+                    <p>
+                        Note obtenue : 
+                        <input type="number" step="0.01" min="0" name="note_obtenue_{{ e.id }}" 
+                               value="{{ e.note_obtenue|default:'' }}" 
+                               class="w-24 px-2 py-1 rounded-md text-gray-900">
+                        {% if e.note_obtenue %}
+                            <span class="ml-2 text-gray-300">(Actuelle : {{ e.note_obtenue }})</span>
+                        {% else %}
+                            <span class="ml-2 text-gray-500">(Non encore remplie)</span>
+                        {% endif %}
+                    </p>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="mt-6 text-center">
+                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg">
+                    Enregistrer les notes
+                </button>
+            </div>
+        </form>
+        {% else %}
+        <p class="text-gray-400 text-center mt-6">Aucune épreuve disponible pour cette période.</p>
+        {% endif %}
+
+        <div class="mt-6 text-center">
+            <a href="{% url 'periode_detail' matiere.id periode.id %}" class="text-indigo-400 hover:underline">
+                ← Retour à la période
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+
+{% comment %} {% extends "base.html" %}
+{% block title %}Épreuves - {{ eleve.nom }}{% endblock %}
+
+{% block content %}
+<div class="bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-5xl mx-auto bg-gray-800 rounded-lg shadow-lg p-8">
+        <h2 class="text-3xl font-semibold text-center text-white mb-6">
+            Épreuves pour {{ eleve.nom }} – {{ matiere.nom }} – {{ periode.nom }}
+        </h2>
+
+        <p class="text-gray-300 text-center mb-4">
+            Professeur : <strong>{{ matiere.prof.get_full_name }}</strong>
+        </p>
+
+        {% if epreuves %}
+        <form method="POST">
+            {% csrf_token %}
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                {% for e in epreuves %}
+                <div class="bg-gray-800 p-4 rounded-lg shadow-lg text-white">
+                    <h4 class="text-lg font-semibold mb-2">
+                        {{ e.nom_epreuve }} 
+                        <span class="text-gray-300 text-sm">({{ e.date_epreuve|date:"d/m/Y" }})</span>
+                    </h4>
+                    <p>Note attendue : {{ e.note_epreuve_attendue }}</p>
+                    <p>
+                        Note obtenue : 
+                        <input type="number" step="0.01" min="0" name="note_obtenue_{{ e.id }}" 
+                               value="{{ e.note_obtenue }}" 
+                               class="w-24 px-2 py-1 rounded-md text-gray-900">
+                        {% if e.note_obtenue %}
+                            <span class="ml-2 text-gray-300">(Actuelle : {{ e.note_obtenue }})</span>
+                        {% endif %}
+                    </p>
+                    
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="mt-6 text-center">
+                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg">
+                    Enregistrer les notes
+                </button>
+            </div>
+        </form>
+        {% else %}
+        <p class="text-gray-400 text-center mt-6">Aucune épreuve disponible pour cette période.</p>
+        {% endif %}
+
+        <div class="mt-6 text-center">
+            <a href="{% url 'periode_detail' matiere.id periode.id %}" class="text-indigo-400 hover:underline">
+                ← Retour à la période
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %} {% endcomment %} 

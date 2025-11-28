@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+{% block title %}Semestres Totaux - {{ classe.nom }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-900 py-12 px-4 text-white">
+  <div class="max-w-3xl mx-auto bg-gray-800 rounded-lg p-6 shadow-lg">
+    
+    <!-- Titre + formulaire création / modification -->
+    <h2 class="text-2xl font-bold text-indigo-400 mb-6">
+      {% if semestre_to_edit %}Modifier{% else %}Créer{% endif %} un Semestre Total
+    </h2>
+
+    <form method="POST" class="space-y-4">
+      {% csrf_token %}
+      {{ form.nom.label_tag }}
+      {{ form.nom|add_class:"w-full px-3 py-2 bg-gray-700 text-white rounded" }}
+      <div class="flex items-center space-x-2 mt-2">
+        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded text-white font-semibold">
+          {% if semestre_to_edit %}Modifier{% else %}Créer{% endif %}
+        </button>
+        {% if semestre_to_edit %}
+        <a href="{% url 'definir_semestre_total' classe.id %}" 
+           class="bg-gray-600 px-4 py-2 rounded text-white">Annuler</a>
+        {% endif %}
+      </div>
+    </form>
+
+    <!-- Liste des Semestres -->
+    <h3 class="text-xl font-semibold text-green-400 mt-8 mb-4">Liste des Semestres</h3>
+    {% if semestres %}
+      <ul>
+        {% for s in semestres %}
+          <li class="flex justify-between items-center bg-gray-700 px-3 py-2 rounded mb-2">
+            <span>{{ s.nom }}</span>
+            <span>
+              <!-- Modifier -->
+              <a href="?edit={{ s.id }}" class="bg-blue-600 px-2 py-1 rounded text-white text-xs mr-2">Modifier</a>
+
+              <!-- Supprimer avec SweetAlert -->
+              <button type="button" onclick="confirmDeleteSemestre('{{ s.id }}', '{{ s.nom }}')"
+                      class="bg-red-600 px-2 py-1 rounded text-white text-xs">
+                Supprimer
+              </button>
+            </span>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="text-gray-400">Aucun semestre défini.</p>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Script SweetAlert pour suppression -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+function confirmDeleteSemestre(semestreId, nom) {
+    Swal.fire({
+        title: 'Êtes-vous sûr ?',
+        text: `Le Semestre (${nom}) sera supprimé !`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc2626',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Oui, supprimer',
+        cancelButtonText: 'Annuler'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            // Utilisation de l’URL Django et remplacement de l'ID
+            form.action = "{% url 'supprimer_semestre_total' classe.id 0 %}".replace('/0/', '/' + semestreId + '/');
+            form.innerHTML = `{% csrf_token %}`;
+            document.body.appendChild(form);
+            form.submit();
+        }
+    });
+}
+</script>
+{% endblock %}
+
+
+
+
+
+{% comment %} {% extends "base.html" %}
+{% load static %}
+{% load custom_filters %}
+{% block title %}Semestres Totaux - {{ classe.nom }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-900 py-12 px-4 sm:px-6 lg:px-8 text-white">
+  <div class="max-w-5xl mx-auto bg-gray-800 rounded-lg shadow-lg p-8">
+    <h2 class="text-3xl font-bold text-center text-indigo-400 mb-8">
+      {% if semestre_to_edit %}
+        Modifier le Semestre Total de {{ classe.nom }}
+      {% else %}
+        Définir un Semestre Total pour {{ classe.nom }}
+      {% endif %}
+    </h2>
+
+    <!-- 🔹 Formulaire création / édition -->
+    <form method="POST" class="space-y-4">
+      {% csrf_token %}
+
+      <!-- Nom du Semestre -->
+      <div>
+        <label class="block text-gray-300 mb-1">Nom du Semestre</label>
+        {{ form.nom|add_class:"text-red-500 border rounded px-2 py-1 w-full bg-gray-700 text-white" }}
+      </div>
+
+      <!-- Maximas associés en checkboxes -->
+      <div>
+        <label class="block text-gray-300 mb-1">Maximas associés</label>
+        <div class="grid grid-cols-2 gap-2">
+          {% for checkbox in form.maximas %}
+            <label class="flex items-center space-x-2">
+              {{ checkbox.tag }}
+              <span>{{ checkbox.choice_label }}</span>
+            </label>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Boutons -->
+      <div class="flex items-center space-x-4 mt-4">
+        <button type="submit"
+          class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 py-2 rounded-md transition duration-300">
+          {% if semestre_to_edit %}Modifier{% else %}Créer{% endif %}
+        </button>
+
+        {% if semestre_to_edit %}
+        <a href="{% url 'definir_semestre_total' classe.id %}"
+          class="bg-gray-600 hover:bg-gray-700 text-white font-semibold px-6 py-2 rounded-md transition duration-300">
+          Annuler
+        </a>
+        {% endif %}
+      </div>
+    </form>
+
+    <!-- 🔹 Liste des Semestres Totaux -->
+    <div class="mt-10">
+      <h3 class="text-2xl font-semibold text-green-400 mb-4">Liste des Semestres Totaux</h3>
+      {% if semestres %}
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-700 text-sm">
+          <thead>
+            <tr class="bg-gray-700 text-left">
+              <th class="px-4 py-2 font-medium text-white">Nom</th>
+              <th class="px-4 py-2 font-medium text-white">Maximas</th>
+              <th class="px-4 py-2 font-medium text-white">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-700">
+            {% for s in semestres %}
+            <tr class="hover:bg-gray-700 transition duration-200">
+              <td class="px-4 py-2 font-semibold">{{ s.nom }}</td>
+              <td class="px-4 py-2">
+                {% for m in s.maximas.all %}
+                  <span class="bg-gray-700 px-2 py-1 rounded text-indigo-300 mr-1">{{ m.note_attendue }}</span>
+                {% endfor %}
+              </td>
+              <td class="px-4 py-2">
+                <a href="{% url 'modifier_semestre_total' classe.id s.id %}"
+                   class="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-white text-xs mr-2">Modifier</a>
+
+                <button type="button" onclick="confirmDeleteSemestre('{{ s.id }}', '{{ s.nom }}')"
+                        class="bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-white text-xs">
+                  Supprimer
+                </button>
+
+                {% comment %} <a href="{% url 'detail_semestre_total' s.id %}"
+                   class="bg-green-600 hover:bg-green-700 px-3 py-1 rounded text-white text-xs ml-2">Détail</a> {% endcomment %}
+              {% comment %} </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <p class="text-gray-400 text-center">Aucun Semestre Total défini pour cette classe.</p>
+      {% endif %}
+    </div>
+
+    <!-- 🔹 Retour -->
+    <div class="mt-6 text-center">
+      <a href="{% url 'classe_detail' classe.id %}" class="text-indigo-400 hover:underline">← Retour à la classe</a>
+    </div>
+  </div>
+</div>
+
+<!-- 🔹 Script de confirmation suppression -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+function confirmDeleteSemestre(semestreId, nom) {
+    Swal.fire({
+        title: 'Êtes-vous sûr ?',
+        text: `Le Semestre Total (${nom}) sera supprimé !`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc2626',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Oui, supprimer',
+        cancelButtonText: 'Annuler'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `/user/classe/{{ classe.id }}/semestres/${semestreId}/supprimer/`;
+            form.innerHTML = `{% csrf_token %}`;
+            document.body.appendChild(form);
+            form.submit();
+        }
+    });
+}
+</script> 
+{% endblock %} {% endcomment %}

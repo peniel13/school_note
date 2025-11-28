@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Branche – Maxima{% if maxima %} #{{ maxima.id }}{% endif %}{% endblock %}
+
+{% block content %}
+  <div class="max-w‑5xl mx-auto my‑8 p‑6 bg-white shadow-lg">
+    <h2 class="text-lg font-bold mb‑4">
+      Branche pour le maxima :
+      {% if maxima %}
+        #{{ maxima.id }} — Note attendue : {{ maxima.note_attendue }}
+      {% else %}
+        Aucun maxima défini
+      {% endif %}
+    </h2>
+
+    <!-- DEBUG -->
+    <p>DEBUG: maxima = {{ maxima }}</p>
+    <p>DEBUG: matieres count = {{ matieres|length }}</p>
+
+    {% if matieres %}
+      <ul class="list-disc pl‑6">
+        {% for matiere in matieres %}
+          <li class="mb‑1">{{ matiere.nom }}</li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>Aucune matière définie pour ce maxima.</p>
+    {% endif %}
+  </div>
+{% endblock %}

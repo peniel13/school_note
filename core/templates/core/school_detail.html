@@ -1,0 +1,1083 @@
+{% extends "base.html" %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Détail École{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-6xl mx-auto bg-gray-800 rounded-lg shadow-lg p-8">
+        <!-- Header école -->
+        <div class="flex items-center mb-6 gap-4">
+            {% if school.photo %}
+                <!-- Image cliquable -->
+                <img 
+                    src="{{ school.photo.url }}" 
+                    alt="Image école" 
+                    class="w-12 h-12 object-cover rounded-full shadow-md cursor-pointer"
+                    onclick="openSchoolModal()"
+                >
+            {% endif %}
+        
+            <div class="flex items-center gap-2">
+                <h2 class="text-3xl font-semibold text-white">ADMIN {{ school.nom }}</h2>
+                <span class="text-gray-400">{{ school.annee_scolaire }}</span>
+            </div>
+        </div>
+        
+        <!-- ========================= -->
+        <!-- MODAL POUR L'ÉCOLE        -->
+        <!-- ========================= -->
+        
+        <div id="schoolModal" class="fixed inset-0 bg-black bg-opacity-60 hidden z-50 flex items-center justify-center">
+            <div class="bg-gray-800 rounded-xl p-6 max-w-sm w-full shadow-xl text-center relative">
+        
+                <!-- Bouton fermer -->
+                <button onclick="closeSchoolModal()" 
+                        class="absolute top-3 right-3 text-gray-400 hover:text-white text-xl">
+                    &times;
+                </button>
+        
+                {% if school.photo %}
+                    <img src="{{ school.photo.url }}" 
+                         alt="Image école" 
+                         class="w-40 h-40 mx-auto object-cover rounded-full shadow-md mb-4">
+                {% endif %}
+        
+                <h3 class="text-2xl font-semibold text-white">{{ school.nom }}</h3>
+        
+                <p class="text-gray-300 mt-2">
+                    Année scolaire : <strong>{{ school.annee_scolaire }}</strong>
+                </p>
+        
+                <p class="text-gray-300 mt-2">
+                    Type : <strong class="capitalize">{{ school.get_type_ecole_display }}</strong>
+                </p>
+        
+                <button onclick="closeSchoolModal()" 
+                        class="mt-4 bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-lg text-white">
+                    Fermer
+                </button>
+            </div>
+        </div>
+        
+        <!-- Script Modal -->
+        <script>
+        function openSchoolModal() {
+            document.getElementById("schoolModal").classList.remove("hidden");
+        }
+        function closeSchoolModal() {
+            document.getElementById("schoolModal").classList.add("hidden");
+        }
+        </script>
+        
+        {% comment %} <div class="flex items-center mb-6 gap-4">
+            {% if school.photo %}
+                <img src="{{ school.photo.url }}" alt="Image école" class="w-12 h-12 object-cover rounded-full shadow-md">
+            {% endif %}
+            <div class="flex items-center gap-2">
+                <h2 class="text-3xl font-semibold text-white">ADMIN {{ school.nom }}</h2>
+                <span class="text-gray-400">{{ school.annee_scolaire }}</span>
+            </div>
+        </div> {% endcomment %}
+
+        <!-- Création classe -->
+        <div class="mb-8">
+            <h3 class="text-xl font-semibold text-indigo-400 mb-2">Créer une nouvelle classe</h3>
+            <form method="POST" class="flex flex-col sm:flex-row gap-2 items-center">
+                {% csrf_token %}
+                {{ form.nom }}
+                <select name="titulaire" id="createTitulaire" class="form-select w-full sm:w-auto rounded-md border-gray-300 text-red-600 bg-white">
+                    <option value="">-- Aucun --</option>
+                    {% for user in users_actifs %}
+                        <option value="{{ user.id }}" data-email="{{ user.email }}">
+                            {{ user.get_full_name }} ({{ user.email }})
+                        </option>
+                    {% endfor %}
+                </select>
+                <button type="submit" name="create_class"
+                        class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md transition duration-300">
+                    Ajouter
+                </button>
+            </form>
+        </div>
+
+        <!-- Liste des classes -->
+        
+
+        <!-- 🔹 Panneau de gestion -->
+        <div class="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
+            <a href="{% url 'classes_list' school.id %}"
+               class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-6 rounded-lg shadow-lg transition transform hover:-translate-y-1 hover:scale-105">
+                <h3 class="text-xl font-semibold mb-2">📘 Classes</h3>
+                <p class="text-gray-200 text-sm">Voir toutes les classes de l'école</p>
+            </a>
+            <a href="{% url 'eleves_list' school.id %}"
+               class="bg-green-600 hover:bg-green-700 text-white px-6 py-6 rounded-lg shadow-lg transition transform hover:-translate-y-1 hover:scale-105">
+                <h3 class="text-xl font-semibold mb-2">👨‍🎓 Élèves</h3>
+                <p class="text-gray-200 text-sm">Voir tous les élèves de l'école</p>
+            </a>
+            <a href="{% url 'professeurs_list' school.id %}"
+               class="bg-yellow-600 hover:bg-yellow-700 text-white px-6 py-6 rounded-lg shadow-lg transition transform hover:-translate-y-1 hover:scale-105">
+                <h3 class="text-xl font-semibold mb-2">👩‍🏫 Professeurs</h3>
+                <p class="text-gray-200 text-sm">Voir tous les professeurs de l'école</p>
+            </a>
+        </div>
+
+         <!-- Liste des classes en cartes -->
+         <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for classe in classes %}
+            <div class="bg-gray-700 rounded-xl shadow-md p-4 transform hover:-translate-y-1 hover:scale-105 transition duration-300 relative group">
+                <div class="flex items-center gap-4">
+                    {% if classe.titulaire.profile_pic %}
+                        <img src="{{ classe.titulaire.profile_pic.url }}" alt="Prof"
+                             class="w-12 h-12 rounded-full object-cover border-2 border-indigo-500">
+                    {% else %}
+                        <img src="https://bootdey.com/img/Content/avatar/avatar7.png" alt="Prof"
+                             class="w-12 h-12 rounded-full border-2 border-indigo-500">
+                    {% endif %}
+
+                    <div>
+                        <h4 class="text-lg font-semibold text-white">{{ classe.nom }}</h4>
+                        <span class="text-gray-300 text-sm">
+                            Titulaire: {{ classe.titulaire.get_full_name|default:"Aucun" }}
+                        </span>
+                    </div>
+                </div>
+
+                {% if classe.titulaire %}
+                    <span class="absolute top-2 right-2 bg-indigo-600 text-white text-xs px-2 py-1 rounded-full">
+                        Titulaire
+                    </span>
+                {% endif %}
+
+                <div class="absolute bottom-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition duration-300">
+                    <button onclick="openUpdateModal('{{ classe.id }}', '{{ classe.titulaire.id|default:'' }}')"
+                            class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded-md text-sm">
+                        Modifier
+                    </button>
+                    <button onclick="confirmDeleteClass('{{ classe.id }}', '{{ classe.nom }}')"
+        class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-sm">
+    Supprimer
+</button>
+
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal Modifier titulaire -->
+<div id="updateModal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+    <div class="bg-gray-900 rounded-xl p-6 w-96 relative">
+        <button onclick="closeUpdateModal()" class="absolute top-2 right-2 text-gray-400 hover:text-white">&times;</button>
+        <h2 class="text-lg font-semibold mb-4 text-indigo-400">Modifier titulaire</h2>
+        <form id="updateForm" method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="classe_id" id="updateClasseId">
+            <select name="titulaire" id="updateTitulaire" class="form-select w-full mb-4 rounded-md border-gray-300 text-red-600 bg-white">
+                <option value="">-- Aucun --</option>
+                {% for user in users_actifs %}
+                    <option value="{{ user.id }}">{{ user.get_full_name }} ({{ user.email }})</option>
+                {% endfor %}
+            </select>
+            <button type="submit" name="update_titulaire"
+                    class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md w-full">Sauvegarder</button>
+        </form>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link href="https://cdn.jsdelivr.net/npm/tom-select/dist/css/tom-select.bootstrap5.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script>
+
+<style>
+/* 🔹 Personnalisation du select */
+.ts-control, .ts-dropdown-content {
+    color: #dc2626 !important; /* texte rouge */
+    background-color: #fff !important; /* fond blanc */
+}
+.ts-dropdown .option {
+    color: #dc2626 !important;
+}
+.ts-dropdown .active {
+    background-color: #f3f4f6 !important; /* gris clair quand survolé */
+    color: #dc2626 !important;
+}
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    new TomSelect("#createTitulaire");
+    new TomSelect("#updateTitulaire");
+});
+
+function openUpdateModal(classeId, titulaireId){
+    document.getElementById('updateModal').classList.remove('hidden');
+    document.getElementById('updateClasseId').value = classeId;
+    document.getElementById('updateTitulaire').tomselect.setValue(titulaireId || '');
+}
+function closeUpdateModal(){
+    document.getElementById('updateModal').classList.add('hidden');
+}
+function confirmDeleteClass(classeId, classeNom){
+    Swal.fire({
+        title: 'Êtes-vous sûr ?',
+        text: `La classe "${classeNom}" sera supprimée !`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc2626',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Oui, supprimer',
+        cancelButtonText: 'Annuler'
+    }).then((result)=>{
+        if(result.isConfirmed){
+            const form = document.createElement('form');
+            form.method='POST';
+            form.action='';
+            form.innerHTML=`{% csrf_token %}<input type="hidden" name="classe_id" value="${classeId}"><input type="hidden" name="delete_class" value="1">`;
+            document.body.appendChild(form); form.submit();
+        }
+    });
+}
+</script>
+{% endblock %}
+
+
+
+{% comment %} {% extends "base.html" %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Détail École{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-6xl mx-auto bg-gray-800 rounded-lg shadow-lg p-8">
+        <!-- Header école -->
+        <div class="flex items-center mb-6 gap-4">
+            {% if school.photo %}
+                <img src="{{ school.photo.url }}" alt="Image école" class="w-12 h-12 object-cover rounded-full shadow-md">
+            {% endif %}
+            
+            <div class="flex items-center gap-2">
+                <h2 class="text-3xl font-semibold text-white">{{ school.nom }}</h2>
+                <span class="text-gray-400">{{ school.annee_scolaire }}</span>
+                <!-- Nouveau bouton qui ouvre le modal -->
+                <button onclick="openControlModal()"
+                        class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded-md text-sm transition duration-200">
+                    Admin école
+                </button>
+            </div>
+            
+        </div>
+        
+        <!-- 🔹 Modal d'administration -->
+        <div id="controlModal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+            <div class="bg-gray-800 rounded-lg shadow-lg p-8 w-96 relative text-center">
+                <!-- Bouton fermeture -->
+                <button onclick="closeControlModal()" class="absolute top-3 right-3 text-gray-400 hover:text-white text-2xl">&times;</button>
+        
+                <h2 class="text-2xl font-semibold text-white mb-6">Panneau de Contrôle</h2>
+        
+                <div class="grid grid-cols-1 gap-4">
+                    <!-- Bouton Classes -->
+                    <a href="{% url 'classes_list' school.id %}"
+                       class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-4 rounded-lg shadow-lg transition transform hover:-translate-y-1 hover:scale-105">
+                        <h3 class="text-xl font-semibold mb-2">Classes</h3>
+                        <p class="text-gray-200 text-sm">Voir toutes les classes de l'école</p>
+                    </a>
+        
+                    <!-- Bouton Élèves -->
+                    <a href="{% url 'eleves_list' school.id %}"
+                       class="bg-green-600 hover:bg-green-700 text-white px-6 py-4 rounded-lg shadow-lg transition transform hover:-translate-y-1 hover:scale-105">
+                        <h3 class="text-xl font-semibold mb-2">Élèves</h3>
+                        <p class="text-gray-200 text-sm">Voir tous les élèves de l'école</p>
+                    </a>
+        
+                    <!-- Bouton Professeurs -->
+                    <a href="{% url 'professeurs_list' school.id %}"
+                       class="bg-yellow-600 hover:bg-yellow-700 text-white px-6 py-4 rounded-lg shadow-lg transition transform hover:-translate-y-1 hover:scale-105">
+                        <h3 class="text-xl font-semibold mb-2">Professeurs</h3>
+                        <p class="text-gray-200 text-sm">Voir tous les professeurs de l'école</p>
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 🔹 Script du modal -->
+        <script>
+        function openControlModal() {
+            document.getElementById('controlModal').classList.remove('hidden');
+        }
+        
+        function closeControlModal() {
+            document.getElementById('controlModal').classList.add('hidden');
+        }
+        </script>
+        
+
+        <!-- Création classe -->
+        <div class="mb-8">
+            <h3 class="text-xl font-semibold text-indigo-400 mb-2">Créer une nouvelle classe</h3>
+            <form method="POST" class="flex flex-col sm:flex-row gap-2 items-center">
+                {% csrf_token %}
+                {{ form.nom }}
+                <select name="titulaire" id="createTitulaire" class="form-select w-full sm:w-auto rounded-md border-gray-300">
+                    <option value="">-- Aucun --</option>
+                    {% for user in users_actifs %}
+                        <option value="{{ user.id }}" data-email="{{ user.email }}">
+                            {{ user.get_full_name }} ({{ user.email }})
+                        </option>
+                    {% endfor %}
+                </select>
+                <button type="submit" name="create_class"
+                        class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md transition duration-300">
+                    Ajouter
+                </button>
+            </form>
+        </div>
+
+       <!-- Liste des classes -->
+<div class="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for classe in classes %}
+    <a href="{% url 'classe_detail' classe.id %}"
+       class="block bg-gray-700 rounded-xl shadow-md p-4 transform hover:-translate-y-1 hover:scale-105 transition duration-300 relative group cursor-pointer">
+        <div class="flex items-center gap-4">
+            {% if classe.titulaire.profile_pic %}
+                <img src="{{ classe.titulaire.profile_pic.url }}" alt="Prof"
+                     class="w-12 h-12 rounded-full object-cover border-2 border-indigo-500">
+            {% else %}
+                <img src="https://bootdey.com/img/Content/avatar/avatar7.png" alt="Prof"
+                     class="w-12 h-12 rounded-full border-2 border-indigo-500">
+            {% endif %}
+            <div>
+                <h4 class="text-lg font-semibold text-white">{{ classe.nom }}</h4>
+                <span class="text-gray-300 text-sm">
+                    Titulaire: {{ classe.titulaire.get_full_name|default:"Aucun" }}
+                </span>
+            </div>
+        </div>
+
+        {% if classe.titulaire %}
+            <span class="absolute top-2 right-2 bg-indigo-600 text-white text-xs px-2 py-1 rounded-full">Titulaire</span>
+        {% endif %}
+
+        <!-- Boutons Modifier et Supprimer visibles au survol -->
+        <div class="absolute bottom-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition duration-300"
+             onclick="event.stopPropagation();"> <!-- Empêche le clic sur les boutons d’ouvrir la page -->
+            <button onclick="openUpdateModal('{{ classe.id }}', '{{ classe.titulaire.id|default:'' }}')"
+                    class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded-md text-sm">
+                Modifier
+            </button>
+            <button onclick="confirmDeleteClass('{{ classe.id }}', '{{ classe.nom }}')"
+                    class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-sm">
+                Supprimer
+            </button>
+        </div>
+    </a>
+    {% endfor %}
+</div>
+
+
+        <!-- Création matière -->
+        <div class="mb-8 mt-8">
+            <h3 class="text-xl font-semibold text-green-400 mb-2">Créer une nouvelle matière</h3>
+            <form method="POST" class="flex flex-col sm:flex-row gap-2 items-center">
+                {% csrf_token %}
+                {{ matiere_form.nom|add_class:"text-red-600 bg-white" }}
+                <select name="classe" id="selectClasseMatiere" class="form-select w-full sm:w-auto rounded-md border-gray-300 text-red-600">
+                    <option value="">-- Sélectionner une classe --</option>
+                    {% for classe in classes %}
+                        <option value="{{ classe.id }}">{{ classe.nom }}</option>
+                    {% endfor %}
+                </select>
+                <select name="prof" id="createProf" class="form-select w-full sm:w-auto rounded-md border-gray-300 text-red-600">
+                    <option value="">-- Aucun --</option>
+                    {% for user in users_actifs %}
+                        <option value="{{ user.id }}" data-email="{{ user.email }}">
+                            {{ user.get_full_name }} ({{ user.email }})
+                        </option>
+                    {% endfor %}
+                </select>
+                <button type="submit" name="create_matiere"
+                        class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md transition duration-300">Ajouter</button>
+            </form>
+        </div>
+
+        <!-- Liste des matières -->
+        <div class="mt-6">
+            <h3 class="text-xl font-semibold text-green-400 mb-4">Liste des matières</h3>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-700">
+                    <thead>
+                        <tr class="bg-gray-800">
+                            <th class="px-4 py-2 text-left text-sm font-medium text-white">Nom</th>
+                            <th class="px-4 py-2 text-left text-sm font-medium text-white">Classe</th>
+                            <th class="px-4 py-2 text-left text-sm font-medium text-white">Professeur</th>
+                            <th class="px-4 py-2 text-left text-sm font-medium text-white">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-700">
+                        {% for matiere in school.matieres.all %}
+                        <tr>
+                            <td class="px-4 py-2 text-red-600">{{ matiere.nom }}</td>
+                            <td class="px-4 py-2 text-white">{{ matiere.classe.nom }}</td>
+                            <td class="px-4 py-2 flex items-center gap-2">
+                                {% if matiere.prof.profile_pic %}
+                                    <img src="{{ matiere.prof.profile_pic.url }}" alt="Prof" class="w-8 h-8 rounded-full object-cover">
+                                {% else %}
+                                    <img src="https://bootdey.com/img/Content/avatar/avatar7.png" alt="Prof" class="w-8 h-8 rounded-full object-cover">
+                                {% endif %}
+                                <span class="text-white">{{ matiere.prof.get_full_name }}</span>
+                            </td>
+                            <td class="px-4 py-2 flex gap-2">
+                                <button type="button"
+                                        onclick="openUpdateMatiereModal('{{ matiere.id }}', '{{ matiere.nom }}', '{{ matiere.classe.id }}', '{{ matiere.prof.id }}')"
+                                        class="bg-indigo-600 hover:bg-indigo-700 text-white px-2 py-1 rounded-md text-sm">Modifier</button>
+                                <button type="button" onclick="confirmDeleteMatiere('{{ matiere.id }}', '{{ matiere.nom }}')"
+                                        class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded-md text-sm">Supprimer</button>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="px-4 py-2 text-gray-400">Aucune matière créée</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Modifier Matière -->
+<div id="updateMatiereModal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+    <div class="bg-gray-900 rounded-xl p-6 w-96 relative">
+        <button onclick="closeUpdateMatiereModal()" class="absolute top-2 right-2 text-gray-400 hover:text-white">&times;</button>
+        <h2 class="text-lg font-semibold mb-4 text-indigo-400">Modifier matière</h2>
+        <form id="updateMatiereForm" method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="matiere_id" id="updateMatiereId">
+            <input type="text" name="nom" id="updateMatiereNom"
+                   class="w-full mb-2 px-2 py-1 rounded-md border border-gray-300 text-red-600"
+                   placeholder="Nom de la matière">
+            <select name="classe" id="updateClasseMatiere" class="form-select w-full mb-2 rounded-md border-gray-300 text-red-600">
+                <option value="">-- Sélectionner une classe --</option>
+                {% for classe in classes %}
+                    <option value="{{ classe.id }}">{{ classe.nom }}</option>
+                {% endfor %}
+            </select>
+            <select name="prof" id="updateProfMatiere" class="form-select w-full rounded-md border-gray-300 text-red-600">
+                <option value="">-- Aucun --</option>
+                {% for user in users_actifs %}
+                    <option value="{{ user.id }}" data-email="{{ user.email }}">
+                        {{ user.get_full_name }} ({{ user.email }})
+                    </option>
+                {% endfor %}
+            </select>
+            <button type="submit" name="update_matiere"
+                    class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md w-full mt-3">Sauvegarder</button>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Modifier titulaire -->
+<div id="updateModal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+    <div class="bg-gray-900 rounded-xl p-6 w-96 relative">
+        <button onclick="closeUpdateModal()" class="absolute top-2 right-2 text-gray-400 hover:text-white">&times;</button>
+        <h2 class="text-lg font-semibold mb-4 text-indigo-400">Modifier titulaire</h2>
+        <form id="updateForm" method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="classe_id" id="updateClasseId">
+            <select name="titulaire" id="updateTitulaire" class="form-select w-full mb-4 rounded-md border-gray-300">
+                <option value="">-- Aucun --</option>
+                {% for user in users_actifs %}
+                    <option value="{{ user.id }}" data-email="{{ user.email }}">
+                        {{ user.get_full_name }} ({{ user.email }})
+                    </option>
+                {% endfor %}
+            </select>
+            <button type="submit" name="update_titulaire"
+                    class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md w-full">Sauvegarder</button>
+        </form>
+    </div>
+</div>
+
+<!-- Librairies -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link href="https://cdn.jsdelivr.net/npm/tom-select/dist/css/tom-select.bootstrap5.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // TomSelect pour tous les selects
+    ["#createTitulaire","#updateTitulaire","#createProf","#selectClasseMatiere","#updateProfMatiere","#updateClasseMatiere"]
+    .forEach(selector => {
+        new TomSelect(selector, {
+            valueField: "value",
+            labelField: "text",
+            searchField: ["text","email"],
+            render: {
+                option: function(item, escape) { return `<div class="text-gray-900 bg-white p-1 rounded-md hover:bg-gray-100">${escape(item.text)}</div>`; },
+                item: function(item, escape) { return `<div class="text-red-600 p-1">${escape(item.text)}</div>`; }
+            },
+            dropdownClass: "bg-white rounded-md shadow-lg",
+            maxOptions: 100,
+            allowEmptyOption: true
+        });
+    });
+});
+
+// Modals classe
+function openUpdateModal(classeId, titulaireId){
+    document.getElementById('updateModal').classList.remove('hidden');
+    document.getElementById('updateClasseId').value = classeId;
+    document.getElementById('updateTitulaire').tomselect.setValue(titulaireId||'');
+}
+function closeUpdateModal(){document.getElementById('updateModal').classList.add('hidden');}
+function confirmDeleteClass(classeId, classeNom){
+    Swal.fire({
+        title: 'Êtes-vous sûr ?',
+        text: `La classe "${classeNom}" sera supprimée !`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc2626',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Oui, supprimer',
+        cancelButtonText: 'Annuler'
+    }).then((result)=>{
+        if(result.isConfirmed){
+            const form = document.createElement('form');
+            form.method='POST';
+            form.action='';
+            form.innerHTML=`{% csrf_token %}<input type="hidden" name="classe_id" value="${classeId}"><input type="hidden" name="delete_class" value="1">`;
+            document.body.appendChild(form); form.submit();
+        }
+    });
+}
+
+// Modals matière
+function openUpdateMatiereModal(id, nom, classeId, profId){
+    document.getElementById('updateMatiereModal').classList.remove('hidden');
+    document.getElementById('updateMatiereId').value = id;
+    document.getElementById('updateMatiereNom').value = nom;
+    document.getElementById('updateClasseMatiere').tomselect.setValue(classeId||'');
+    document.getElementById('updateProfMatiere').tomselect.setValue(profId||'');
+}
+function closeUpdateMatiereModal(){document.getElementById('updateMatiereModal').classList.add('hidden');}
+function confirmDeleteMatiere(matiereId, matiereNom){
+    Swal.fire({
+        title: 'Êtes-vous sûr ?',
+        text: `La matière "${matiereNom}" sera supprimée !`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc2626',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Oui, supprimer',
+        cancelButtonText: 'Annuler'
+    }).then((result)=>{
+        if(result.isConfirmed){
+            const form = document.createElement('form');
+            form.method='POST';
+            form.action='';
+            form.innerHTML=`{% csrf_token %}<input type="hidden" name="matiere_id" value="${matiereId}"><input type="hidden" name="delete_matiere" value="1">`;
+            document.body.appendChild(form); form.submit();
+        }
+    });
+}
+</script>
+{% endblock %} {% endcomment %}
+
+{% comment %} {% extends "base.html" %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Détail École{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-6xl mx-auto bg-gray-800 rounded-lg shadow-lg p-8">
+         <!-- Header école -->
+         <div class="flex items-center mb-6 gap-4">
+            {% if school.photo %}
+                <img src="{{ school.photo.url }}" alt="Image école" class="w-12 h-12 object-cover rounded-full shadow-md">
+            {% endif %}
+            <div>
+                <h2 class="text-3xl font-semibold text-white">{{ school.nom }}</h2>
+                <span class="text-gray-400">{{ school.annee_scolaire }}</span>
+            </div>
+        </div>
+
+        <!-- Création classe -->
+        <div class="mb-8">
+            <h3 class="text-xl font-semibold text-indigo-400 mb-2">Créer une nouvelle classe</h3>
+            <form method="POST" class="flex flex-col sm:flex-row gap-2 items-center">
+                {% csrf_token %}
+                {{ form.nom }}
+
+                <!-- Select amélioré avec recherche par email -->
+                <select name="titulaire" id="createTitulaire" class="form-select w-full sm:w-auto rounded-md border-gray-300">
+                    <option value="">-- Aucun --</option>
+                    {% for user in users_actifs %}
+                        <option value="{{ user.id }}" data-email="{{ user.email }}">
+                            {{ user.get_full_name }} ({{ user.email }})
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <button type="submit" name="create_class"
+                        class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md transition duration-300">
+                    Ajouter
+                </button>
+            </form>
+        </div>
+
+        <!-- Liste des classes en cartes -->
+        <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for classe in classes %}
+            <div class="bg-gray-700 rounded-xl shadow-md p-4 transform hover:-translate-y-1 hover:scale-105 transition duration-300 relative group">
+                <div class="flex items-center gap-4">
+                    {% if classe.titulaire.profile_pic %}
+                        <img src="{{ classe.titulaire.profile_pic.url }}" alt="Prof"
+                             class="w-12 h-12 rounded-full object-cover border-2 border-indigo-500">
+                    {% else %}
+                        <img src="https://bootdey.com/img/Content/avatar/avatar7.png" alt="Prof"
+                             class="w-12 h-12 rounded-full border-2 border-indigo-500">
+                    {% endif %}
+
+                    <div>
+                        <h4 class="text-lg font-semibold text-white">{{ classe.nom }}</h4>
+                        <span class="text-gray-300 text-sm">
+                            Titulaire: {{ classe.titulaire.get_full_name|default:"Aucun" }}
+                        </span>
+                    </div>
+                </div>
+
+                {% if classe.titulaire %}
+                    <span class="absolute top-2 right-2 bg-indigo-600 text-white text-xs px-2 py-1 rounded-full">
+                        Titulaire
+                    </span>
+                {% endif %}
+
+                <div class="absolute bottom-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition duration-300">
+                    <button onclick="openUpdateModal('{{ classe.id }}', '{{ classe.titulaire.id|default:'' }}')"
+                            class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded-md text-sm">
+                        Modifier
+                    </button>
+                    <button onclick="confirmDelete('{{ classe.id }}', '{{ classe.nom }}')"
+                            class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-sm">
+                        Supprimer
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+   <!-- Création matière -->
+<div class="mb-8 mt-8">
+    <h3 class="text-xl font-semibold text-green-400 mb-2">Créer une nouvelle matière</h3>
+    <form method="POST" class="flex flex-col sm:flex-row gap-2 items-center">
+        {% csrf_token %}
+        {{ matiere_form.nom|add_class:"text-red-600 bg-white" }}  <!-- Texte en rouge -->
+
+        <!-- Sélection classe avec TomSelect -->
+        <select name="classe" id="selectClasseMatiere" class="form-select w-full sm:w-auto rounded-md border-gray-300 text-red-600">
+            <option value="">-- Sélectionner une classe --</option>
+            {% for classe in classes %}
+                <option value="{{ classe.id }}">{{ classe.nom }}</option>
+            {% endfor %}
+        </select>
+
+        <!-- Sélection professeur avec TomSelect -->
+        <select name="prof" id="createProf" class="form-select w-full sm:w-auto rounded-md border-gray-300 text-red-600">
+            <option value="">-- Aucun --</option>
+            {% for user in users_actifs %}
+                <option value="{{ user.id }}" data-email="{{ user.email }}">
+                    {{ user.get_full_name }} ({{ user.email }})
+                </option>
+            {% endfor %}
+        </select>
+
+        <button type="submit" name="create_matiere"
+                class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md transition duration-300">
+            Ajouter
+        </button>
+    </form>
+</div>
+
+<!-- Liste des matières -->
+<div class="mt-6">
+    <h3 class="text-xl font-semibold text-green-400 mb-4">Liste des matières</h3>
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-700">
+            <thead>
+                <tr class="bg-gray-800">
+                    <th class="px-4 py-2 text-left text-sm font-medium text-white">Nom</th>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-white">Classe</th>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-white">Professeur</th>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-white">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-700">
+                {% for matiere in school.matieres.all %}
+                <tr>
+                    <td class="px-4 py-2 text-red-600">{{ matiere.nom }}</td>
+                    <td class="px-4 py-2 text-white">{{ matiere.classe.nom }}</td>
+                    <td class="px-4 py-2 flex items-center gap-2">
+                        {% if matiere.prof.profile_pic %}
+                            <img src="{{ matiere.prof.profile_pic.url }}" alt="Prof" class="w-8 h-8 rounded-full object-cover">
+                        {% else %}
+                            <img src="https://bootdey.com/img/Content/avatar/avatar7.png" alt="Prof" class="w-8 h-8 rounded-full object-cover">
+                        {% endif %}
+                        <span class="text-white">{{ matiere.prof.get_full_name }}</span>
+                    </td>
+                    <td class="px-4 py-2 flex gap-2">
+                        <button type="button"
+                                onclick="openUpdateMatiereModal('{{ matiere.id }}', '{{ matiere.nom }}', '{{ matiere.classe.id }}', '{{ matiere.prof.id }}')"
+                                class="bg-indigo-600 hover:bg-indigo-700 text-white px-2 py-1 rounded-md text-sm">
+                            Modifier
+                        </button>
+                        <form method="POST" action="">
+                            {% csrf_token %}
+                            <input type="hidden" name="matiere_id" value="{{ matiere.id }}">
+                            <button name="delete_matiere" type="submit"
+                                    class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded-md text-sm">
+                                Supprimer
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="px-4 py-2 text-gray-400">Aucune matière créée</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal Modifier Matière -->
+<div id="updateMatiereModal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+    <div class="bg-gray-900 rounded-xl p-6 w-96 relative">
+        <button onclick="closeUpdateMatiereModal()" class="absolute top-2 right-2 text-gray-400 hover:text-white">&times;</button>
+        <h2 class="text-lg font-semibold mb-4 text-indigo-400">Modifier matière</h2>
+        <form id="updateMatiereForm" method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="matiere_id" id="updateMatiereId">
+
+            <input type="text" name="nom" id="updateMatiereNom" class="w-full mb-2 px-2 py-1 rounded-md border border-gray-300 text-red-600" placeholder="Nom de la matière">
+
+            <select name="classe" id="updateClasseMatiere" class="form-select w-full mb-2 rounded-md border-gray-300 text-red-600">
+                <option value="">-- Sélectionner une classe --</option>
+                {% for classe in classes %}
+                    <option value="{{ classe.id }}">{{ classe.nom }}</option>
+                {% endfor %}
+            </select>
+
+            <select name="prof" id="updateProfMatiere" class="form-select w-full rounded-md border-gray-300 text-red-600">
+                <option value="">-- Aucun --</option>
+                {% for user in users_actifs %}
+                    <option value="{{ user.id }}" data-email="{{ user.email }}">
+                        {{ user.get_full_name }} ({{ user.email }})
+                    </option>
+                {% endfor %}
+            </select>
+
+            <button type="submit" name="update_matiere" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md w-full mt-3">
+                Sauvegarder
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    ["#createProf", "#selectClasseMatiere", "#updateProfMatiere", "#updateClasseMatiere"].forEach(selector => {
+        new TomSelect(selector, {
+            valueField: "value",
+            labelField: "text",
+            searchField: ["text", "email"],
+            render: {
+                option: function(item, escape) {
+                    return `<div class="text-gray-900 bg-white p-1 rounded-md hover:bg-gray-100">${escape(item.text)}</div>`;
+                },
+                item: function(item, escape) {
+                    return `<div class="text-red-600 p-1">${escape(item.text)}</div>`;
+                }
+            },
+            dropdownClass: "bg-white rounded-md shadow-lg",
+            maxOptions: 100,
+            allowEmptyOption: true
+        });
+    });
+});
+
+function openUpdateMatiereModal(id, nom, classeId, profId) {
+    document.getElementById('updateMatiereModal').classList.remove('hidden');
+    document.getElementById('updateMatiereId').value = id;
+    document.getElementById('updateMatiereNom').value = nom;
+
+    const classeSelect = document.getElementById('updateClasseMatiere').tomselect;
+    classeSelect.setValue(classeId);
+
+    const profSelect = document.getElementById('updateProfMatiere').tomselect;
+    profSelect.setValue(profId || '');
+}
+
+function closeUpdateMatiereModal() {
+    document.getElementById('updateMatiereModal').classList.add('hidden');
+}
+</script>
+
+
+</div>
+
+<!-- Modal Modifier titulaire -->
+<div id="updateModal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+    <div class="bg-gray-900 rounded-xl p-6 w-96 relative">
+        <button onclick="closeUpdateModal()" class="absolute top-2 right-2 text-gray-400 hover:text-white">&times;</button>
+        <h2 class="text-lg font-semibold mb-4 text-indigo-400">Modifier titulaire</h2>
+        <form id="updateForm" method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="classe_id" id="updateClasseId">
+            <select name="titulaire" id="updateTitulaire" class="form-select w-full mb-4 rounded-md border-gray-300">
+                <option value="">-- Aucun --</option>
+                {% for user in users_actifs %}
+                    <option value="{{ user.id }}" data-email="{{ user.email }}">
+                        {{ user.get_full_name }} ({{ user.email }})
+                    </option>
+                {% endfor %}
+            </select>
+            <button type="submit" name="update_titulaire" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md w-full">
+                Sauvegarder
+            </button>
+        </form>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link href="https://cdn.jsdelivr.net/npm/tom-select/dist/css/tom-select.bootstrap5.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // Création classe
+    new TomSelect("#createTitulaire", {
+        valueField: "value",
+        labelField: "text",
+        searchField: ["text", "email"],
+        render: {
+            option: function(item, escape) {
+                return `<div class="text-gray-900 bg-white p-1 rounded-md hover:bg-gray-100">${escape(item.text)}</div>`;
+            },
+            item: function(item, escape) {
+                return `<div class="text-red-600 p-1">${escape(item.text)}</div>`; // texte sélectionné en rouge
+            }
+        },
+        dropdownClass: "bg-white rounded-md shadow-lg",
+        maxOptions: 100,
+        allowEmptyOption: true
+    });
+
+    // Modification titulaire
+    new TomSelect("#updateTitulaire", {
+        valueField: "value",
+        labelField: "text",
+        searchField: ["text", "email"],
+        render: {
+            option: function(item, escape) {
+                return `<div class="text-gray-900 bg-white p-1 rounded-md hover:bg-gray-100">${escape(item.text)}</div>`;
+            },
+            item: function(item, escape) {
+                return `<div class="text-red-600 p-1">${escape(item.text)}</div>`; // texte sélectionné en rouge
+            }
+        },
+        dropdownClass: "bg-white rounded-md shadow-lg",
+        maxOptions: 100,
+        allowEmptyOption: true
+    });
+});
+
+function openUpdateModal(classeId, titulaireId) {
+    document.getElementById('updateModal').classList.remove('hidden');
+    document.getElementById('updateClasseId').value = classeId;
+    const select = document.getElementById('updateTitulaire').tomselect;
+    select.setValue(titulaireId || '');
+}
+
+function closeUpdateModal() {
+    document.getElementById('updateModal').classList.add('hidden');
+}
+
+function confirmDelete(classeId, classeNom) {
+    Swal.fire({
+        title: 'Êtes-vous sûr ?',
+        text: `La classe "${classeNom}" sera supprimée !`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc2626',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Oui, supprimer',
+        cancelButtonText: 'Annuler'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '';
+            form.innerHTML = `
+                {% csrf_token %}
+                <input type="hidden" name="classe_id" value="${classeId}">
+                <input type="hidden" name="delete_class" value="1">
+            `;
+            document.body.appendChild(form);
+            form.submit();
+        }
+    });
+}
+</script>
+{% endblock %}  {% endcomment %}
+
+
+
+{% comment %} {% extends "base.html" %}
+{% load static %}
+
+{% block title %}Détail École{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-6xl mx-auto bg-gray-800 rounded-lg shadow-lg p-8">
+         <!-- Header école -->
+         <div class="flex items-center mb-6 gap-4">
+            {% if school.photo %}
+                <img src="{{ school.photo.url }}" alt="Image école" class="w-12 h-12 object-cover rounded-full shadow-md">
+            {% endif %}
+            <div>
+                <h2 class="text-3xl font-semibold text-white">{{ school.nom }}</h2>
+                <span class="text-gray-400">{{ school.annee_scolaire }}</span>
+            </div>
+        </div>
+
+        <!-- Création classe -->
+        <div class="mb-8">
+            <h3 class="text-xl font-semibold text-indigo-400 mb-2">Créer une nouvelle classe</h3>
+            <form method="POST" class="flex flex-col sm:flex-row gap-2 items-center">
+                {% csrf_token %}
+                {{ form.nom }}
+                {{ form.titulaire }}
+                <button type="submit" name="create_class"
+                        class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md transition duration-300">
+                    Ajouter
+                </button>
+            </form>
+        </div>
+
+        <!-- Liste des classes en cartes -->
+        <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for classe in classes %}
+            <div class="bg-gray-700 rounded-xl shadow-md p-4 transform hover:-translate-y-1 hover:scale-105 transition duration-300 relative group">
+                <div class="flex items-center gap-4">
+                    <!-- Avatar titulaire -->
+                    {% if classe.titulaire.profile_pic %}
+                        <img src="{{ classe.titulaire.profile_pic.url }}" alt="Prof"
+                             class="w-12 h-12 rounded-full object-cover border-2 border-indigo-500">
+                    {% else %}
+                        <img src="https://bootdey.com/img/Content/avatar/avatar7.png" alt="Prof"
+                             class="w-12 h-12 rounded-full border-2 border-indigo-500">
+                    {% endif %}
+
+                    <div>
+                        <h4 class="text-lg font-semibold text-white">{{ classe.nom }}</h4>
+                        <span class="text-gray-300 text-sm">
+                            Titulaire: {{ classe.titulaire.get_full_name|default:"Aucun" }}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Badges -->
+                {% if classe.titulaire %}
+                    <span class="absolute top-2 right-2 bg-indigo-600 text-white text-xs px-2 py-1 rounded-full">
+                        Titulaire
+                    </span>
+                {% endif %}
+
+                <!-- Actions flottantes -->
+                <div class="absolute bottom-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition duration-300">
+                    <button onclick="openUpdateModal('{{ classe.id }}', '{{ classe.titulaire.id|default:'' }}')"
+                            class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded-md text-sm">
+                        Modifier
+                    </button>
+                    <button onclick="confirmDelete('{{ classe.id }}', '{{ classe.nom }}')"
+                            class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-sm">
+                        Supprimer
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal Modifier titulaire -->
+<div id="updateModal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+    <div class="bg-gray-900 rounded-xl p-6 w-96 relative">
+        <button onclick="closeUpdateModal()" class="absolute top-2 right-2 text-gray-400 hover:text-white">&times;</button>
+        <h2 class="text-lg font-semibold mb-4 text-indigo-400">Modifier titulaire</h2>
+        <form id="updateForm" method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="classe_id" id="updateClasseId">
+            <select name="titulaire" id="updateTitulaire" class="form-select w-full mb-4">
+                <option value="">-- Aucun --</option>
+                {% for user in users_actifs %}
+                    <option value="{{ user.id }}">{{ user.get_full_name }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" name="update_titulaire" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md w-full">
+                Sauvegarder
+            </button>
+        </form>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+function openUpdateModal(classeId, titulaireId) {
+    document.getElementById('updateModal').classList.remove('hidden');
+    document.getElementById('updateClasseId').value = classeId;
+    document.getElementById('updateTitulaire').value = titulaireId || '';
+}
+function closeUpdateModal() {
+    document.getElementById('updateModal').classList.add('hidden');
+}
+
+function confirmDelete(classeId, classeNom) {
+    Swal.fire({
+        title: 'Êtes-vous sûr ?',
+        text: `La classe "${classeNom}" sera supprimée !`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc2626',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Oui, supprimer',
+        cancelButtonText: 'Annuler'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '';
+            form.innerHTML = `
+                {% csrf_token %}
+                <input type="hidden" name="classe_id" value="${classeId}">
+                <input type="hidden" name="delete_class" value="1">
+            `;
+            document.body.appendChild(form);
+            form.submit();
+        }
+    });
+}
+</script>
+{% endblock %} {% endcomment %}

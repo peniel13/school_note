@@ -1,0 +1,321 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Créer un Maxima - {{ classe.nom }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-900 py-12 px-4 sm:px-6 lg:px-8 text-white">
+  <div class="max-w-4xl mx-auto bg-gray-800 rounded-lg shadow-lg p-8">
+    <h2 class="text-3xl font-bold text-center text-indigo-400 mb-8">
+      {% if maxima_to_edit %}
+        Modifier le Maxima de {{ classe.nom }}
+      {% else %}
+        Créer un Maxima pour {{ classe.nom }}
+      {% endif %}
+    </h2>
+
+    <!-- ✅ Formulaire création / édition -->
+    <form method="POST" class="space-y-4">
+      {% csrf_token %}
+
+      {% if classe.school.type_ecole == "primaire" %}
+        <div>
+          <label class="block text-gray-300 mb-1">Période (Primaire)</label>
+          {{ form.periode_primaire }}
+        </div>
+      {% elif classe.school.type_ecole == "secondaire" %}
+        <div>
+          <label class="block text-gray-300 mb-1">Période (Secondaire)</label>
+          {{ form.periode_secondaire }}
+        </div>
+      {% endif %}
+
+      <!-- ✅ MATIÈRES EN CHECKBOX -->
+      {% comment %} <div>
+        <label class="block text-gray-300 mb-1">Matières concernées</label>
+
+        <div class="space-y-2">
+          {% for checkbox in form.matieres %}
+            <label class="flex items-center space-x-2 bg-gray-700 px-3 py-2 rounded-md cursor-pointer hover:bg-gray-600">
+              {{ checkbox.tag }}
+              <span>{{ checkbox.choice_label }}</span>
+            </label>
+          {% endfor %}
+        </div>
+      </div> {% endcomment %}
+      <div>
+        <label class="block text-gray-300 mb-1">Matières concernées</label>
+    
+        <!-- 🔥 Conteneur limité à 5 éléments visibles -->
+        <div class="max-h-56 overflow-y-auto pr-2 custom-scroll space-y-2">
+            {% for checkbox in form.matieres %}
+            <label class="flex items-center space-x-2 bg-gray-700 px-3 py-2 rounded-md cursor-pointer hover:bg-gray-600">
+                {{ checkbox.tag }}
+                <span>{{ checkbox.choice_label }}</span>
+            </label>
+            {% endfor %}
+        </div>
+    </div>
+    
+      <div>
+        <label class="block text-gray-300 mb-1">Note attendue (Maxima)</label>
+        {{ form.note_attendue }}
+      </div>
+
+      <button type="submit"
+        class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 py-2 rounded-md transition duration-300">
+        {% if maxima_to_edit %}Modifier{% else %}Créer{% endif %} le Maxima
+      </button>
+
+      {% if maxima_to_edit %}
+      <a href="{% url 'creer_maxima' classe.id %}"
+        class="ml-4 bg-gray-600 hover:bg-gray-700 text-white font-semibold px-6 py-2 rounded-md transition duration-300">
+        Annuler
+      </a>
+      {% endif %}
+    </form>
+
+    <!-- ✅ Liste des Maximas existants -->
+    <div class="mt-10">
+      <h3 class="text-2xl font-semibold text-green-400 mb-4">Liste des Maximas</h3>
+      {% if maximas %}
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-700 text-sm">
+          <thead>
+            <tr class="bg-gray-700 text-left">
+              <th class="px-4 py-2 font-medium text-white">Période</th>
+              <th class="px-4 py-2 font-medium text-white">Matières</th>
+              <th class="px-4 py-2 font-medium text-white">Note attendue</th>
+              <th class="px-4 py-2 font-medium text-white">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-700">
+            {% for m in maximas %}
+            <tr class="hover:bg-gray-700 transition duration-200">
+              <td class="px-4 py-2">
+                {% if m.periode_primaire %}{{ m.periode_primaire.nom }}
+                {% elif m.periode_secondaire %}{{ m.periode_secondaire.nom }}
+                {% else %}-{% endif %}
+              </td>
+              <td class="px-4 py-2">
+                {% for matiere in m.matieres.all %}
+                  <span class="bg-gray-700 px-2 py-1 rounded text-indigo-300 mr-1">{{ matiere.nom }}</span>
+                {% endfor %}
+              </td>
+              <td class="px-4 py-2 font-semibold text-yellow-400">{{ m.note_attendue }}</td>
+              <td class="px-4 py-2">
+                <a href="?edit={{ m.id }}"
+                   class="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-white text-xs mr-2">Modifier</a>
+
+                <button type="button" onclick="confirmDeleteMaxima('{{ m.id }}', '{{ m.note_attendue }}')"
+                        class="bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-white text-xs">
+                  Supprimer
+                </button>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <p class="text-gray-400 text-center">Aucun Maxima créé pour cette classe.</p>
+      {% endif %}
+    </div>
+
+    <!-- ✅ Retour -->
+    <div class="mt-6 text-center">
+      <a href="{% url 'classe_detail' classe.id %}" class="text-indigo-400 hover:underline">← Retour à la classe</a>
+    </div>
+  </div>
+</div>
+<style>
+  /* Scroll minimal et moderne */
+  .custom-scroll::-webkit-scrollbar {
+      width: 6px;
+  }
+  
+  .custom-scroll::-webkit-scrollbar-track {
+      background: #2d2d2d;
+      border-radius: 10px;
+  }
+  
+  .custom-scroll::-webkit-scrollbar-thumb {
+      background: #6366f1; /* Indigo */
+      border-radius: 10px;
+  }
+  
+  .custom-scroll::-webkit-scrollbar-thumb:hover {
+      background: #4f46e5;
+  }
+  </style>
+  
+<!-- ✅ Script de confirmation suppression -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+function confirmDeleteMaxima(maximaId, note) {
+    Swal.fire({
+        title: 'Êtes-vous sûr ?',
+        text: `Le Maxima (${note}) sera supprimé !`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc2626',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Oui, supprimer',
+        cancelButtonText: 'Annuler'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '';
+            form.innerHTML = `
+                {% csrf_token %}
+                <input type="hidden" name="maxima_id" value="${maximaId}">
+                <input type="hidden" name="delete_maxima" value="1">
+            `;
+            document.body.appendChild(form);
+            form.submit();
+        }
+    });
+}
+</script>
+{% endblock %}
+
+
+
+{% comment %} {% extends "base.html" %}
+{% load static %}
+{% block title %}Créer un Maxima - {{ classe.nom }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-900 py-12 px-4 sm:px-6 lg:px-8 text-white">
+  <div class="max-w-4xl mx-auto bg-gray-800 rounded-lg shadow-lg p-8">
+    <h2 class="text-3xl font-bold text-center text-indigo-400 mb-8">
+      {% if maxima_to_edit %}
+        Modifier le Maxima de {{ classe.nom }}
+      {% else %}
+        Créer un Maxima pour {{ classe.nom }}
+      {% endif %}
+    </h2>
+
+    <!-- ✅ Formulaire création / édition -->
+    <form method="POST" class="space-y-4">
+      {% csrf_token %}
+
+      {% if classe.school.type_ecole == "primaire" %}
+        <div>
+          <label class="block text-gray-300 mb-1">Période (Primaire)</label>
+          {{ form.periode_primaire }}
+        </div>
+      {% elif classe.school.type_ecole == "secondaire" %}
+        <div>
+          <label class="block text-gray-300 mb-1">Période (Secondaire)</label>
+          {{ form.periode_secondaire }}
+        </div>
+      {% endif %}
+
+      <div>
+        <label class="block text-gray-300 mb-1">Matières concernées</label>
+        {{ form.matieres }}
+      </div>
+
+      <div>
+        <label class="block text-gray-300 mb-1">Note attendue (Maxima)</label>
+        {{ form.note_attendue }}
+      </div>
+
+      <button type="submit"
+        class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 py-2 rounded-md transition duration-300">
+        {% if maxima_to_edit %}Modifier{% else %}Créer{% endif %} le Maxima
+      </button>
+
+      {% if maxima_to_edit %}
+      <a href="{% url 'creer_maxima' classe.id %}"
+        class="ml-4 bg-gray-600 hover:bg-gray-700 text-white font-semibold px-6 py-2 rounded-md transition duration-300">
+        Annuler
+      </a>
+      {% endif %}
+    </form>
+
+    <!-- ✅ Liste des Maximas existants -->
+    <div class="mt-10">
+      <h3 class="text-2xl font-semibold text-green-400 mb-4">Liste des Maximas</h3>
+      {% if maximas %}
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-700 text-sm">
+          <thead>
+            <tr class="bg-gray-700 text-left">
+              <th class="px-4 py-2 font-medium text-white">Période</th>
+              <th class="px-4 py-2 font-medium text-white">Matières</th>
+              <th class="px-4 py-2 font-medium text-white">Note attendue</th>
+              <th class="px-4 py-2 font-medium text-white">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-700">
+            {% for m in maximas %}
+            <tr class="hover:bg-gray-700 transition duration-200">
+              <td class="px-4 py-2">
+                {% if m.periode_primaire %}{{ m.periode_primaire.nom }}
+                {% elif m.periode_secondaire %}{{ m.periode_secondaire.nom }}
+                {% else %}-{% endif %}
+              </td>
+              <td class="px-4 py-2">
+                {% for matiere in m.matieres.all %}
+                  <span class="bg-gray-700 px-2 py-1 rounded text-indigo-300 mr-1">{{ matiere.nom }}</span>
+                {% endfor %}
+              </td>
+              <td class="px-4 py-2 font-semibold text-yellow-400">{{ m.note_attendue }}</td>
+              <td class="px-4 py-2">
+                <a href="?edit={{ m.id }}"
+                   class="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-white text-xs mr-2">Modifier</a>
+
+                <button type="button" onclick="confirmDeleteMaxima('{{ m.id }}', '{{ m.note_attendue }}')"
+                        class="bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-white text-xs">
+                  Supprimer
+                </button>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <p class="text-gray-400 text-center">Aucun Maxima créé pour cette classe.</p>
+      {% endif %}
+    </div>
+
+    <!-- ✅ Retour -->
+    <div class="mt-6 text-center">
+      <a href="{% url 'classe_detail' classe.id %}" class="text-indigo-400 hover:underline">← Retour à la classe</a>
+    </div>
+  </div>
+</div>
+
+<!-- ✅ Script de confirmation suppression -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+function confirmDeleteMaxima(maximaId, note) {
+    Swal.fire({
+        title: 'Êtes-vous sûr ?',
+        text: `Le Maxima (${note}) sera supprimé !`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc2626',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Oui, supprimer',
+        cancelButtonText: 'Annuler'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '';
+            form.innerHTML = `
+                {% csrf_token %}
+                <input type="hidden" name="maxima_id" value="${maximaId}">
+                <input type="hidden" name="delete_maxima" value="1">
+            `;
+            document.body.appendChild(form);
+            form.submit();
+        }
+    });
+}
+</script>
+{% endblock %} {% endcomment %}

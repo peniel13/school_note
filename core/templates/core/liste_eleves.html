@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+{% block title %}Liste des Élèves{% endblock %}
+
+{% block content %}
+<div class="bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+    <h1 class="text-4xl font-semibold text-white text-center mb-12">
+        Liste des Élèves de {{ school.nom }}
+    </h1>
+
+    <!-- Formulaire de recherche -->
+    <div class="mb-8 flex justify-center">
+        <form method="GET" action="{% url 'eleves_list' school.id %}" class="w-full max-w-md">
+            <div class="flex items-center bg-gray-800 border border-gray-700 rounded-md">
+                <input type="text" name="search" value="{{ search_query }}" placeholder="Rechercher un élève..."
+                       class="w-full px-4 py-2 text-gray-900 rounded-l-md focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-r-md hover:bg-indigo-700">
+                    Rechercher
+                </button>
+            </div>
+        </form>
+    </div>
+   <!-- Liste des élèves -->
+<div id="eleves-section" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 mt-10">
+    {% for eleve in page_obj %}
+    <div class="max-w-sm mx-auto bg-gray-800 rounded-lg shadow-lg overflow-hidden transform hover:scale-105 transition duration-300">
+        <!-- Lien vers la page de détail de l'élève -->
+        <a href="{% url 'details_eleve' eleve.id %}" class="block">
+            <div class="p-6 text-center hover:bg-gray-700 transition duration-300">
+                <h2 class="text-xl font-bold text-white">{{ eleve.nom }}</h2>
+                <p class="text-gray-400 mt-2">Classe : {{ eleve.classe.nom }}</p>
+            </div>
+        </a>
+
+        <!-- Bouton téléchargement PDF -->
+        {% if user.is_staff %}
+        <div class="p-4 text-center">
+            <a href="{% url 'souvenir_eleve_pdf' eleve.id %}" 
+               class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded transition duration-300">
+                Télécharger le souvenir PDF
+            </a>
+        </div>
+        {% endif %}
+    </div>
+    {% empty %}
+    <div class="col-span-full text-center text-white">
+        Aucun élève trouvé.
+    </div>
+    {% endfor %}
+</div>
+
+    {% comment %} <!-- Liste des élèves -->
+    <div id="eleves-section" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 mt-10">
+        {% for eleve in page_obj %}
+        <a href="{% url 'details_eleve' eleve.id %}" class="block transform hover:scale-105 transition duration-300">
+            <div class="max-w-sm mx-auto bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:bg-gray-700">
+                <div class="p-6 text-center">
+                    <h2 class="text-xl font-bold text-white">{{ eleve.nom }}</h2>
+                    <p class="text-gray-400 mt-2">Classe : {{ eleve.classe.nom }}</p>
+                </div>
+            </div>
+        </a>
+        {% empty %}
+        <div class="col-span-full text-center text-white">
+            Aucun élève trouvé.
+        </div>
+        {% endfor %}
+    </div> {% endcomment %}
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="mt-10 flex justify-center">
+        <nav class="inline-flex rounded-md shadow-sm space-x-1">
+            {% if page_obj.has_previous %}
+                <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}"
+                   class="px-4 py-2 bg-gray-700 text-white rounded-l hover:bg-indigo-600 transition">⏮</a>
+                <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}"
+                   class="px-4 py-2 bg-gray-700 text-white hover:bg-indigo-600 transition">◀</a>
+            {% endif %}
+
+            <span class="px-4 py-2 bg-indigo-600 text-white font-semibold">
+                Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+            </span>
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}"
+                   class="px-4 py-2 bg-gray-700 text-white hover:bg-indigo-600 transition">▶</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}"
+                   class="px-4 py-2 bg-gray-700 text-white rounded-r hover:bg-indigo-600 transition">⏭</a>
+            {% endif %}
+        </nav>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Scroll automatique après recherche -->
+{% if search_query %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const section = document.getElementById("eleves-section");
+    if (section) {
+        section.scrollIntoView({ behavior: "smooth" });
+    }
+});
+</script>
+{% endif %}
+{% endblock %}
+
+
+
+
+{% comment %} {% extends "base.html" %}
+
+{% block title %}Liste des Élèves{% endblock %}
+
+{% block content %}
+<div class="bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+    <h1 class="text-4xl font-semibold text-white text-center mb-12">
+        Liste des Élèves de {{ school.nom }}
+    </h1>
+
+    <!-- Formulaire de recherche -->
+    <div class="mb-8 flex justify-center">
+        <form method="GET" action="{% url 'eleves_list' school.id %}" class="w-full max-w-md">
+            <div class="flex items-center bg-gray-800 border border-gray-700 rounded-md">
+                <input type="text" name="search" value="{{ search_query }}" placeholder="Rechercher un élève..." class="w-full px-4 py-2 text-gray-900 rounded-l-md focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-r-md hover:bg-indigo-700">
+                    Rechercher
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Liste des élèves -->
+    <div id="eleves-section" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 mt-10">
+        {% for eleve in eleves %}
+        <a href="{% url 'details_eleve' eleve.id %}" class="block transform hover:scale-105 transition duration-300">
+            <div class="max-w-sm mx-auto bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:bg-gray-700">
+                <div class="p-6 text-center">
+                    <h2 class="text-xl font-bold text-white">{{ eleve.nom }}</h2>
+                    <p class="text-gray-400 mt-2">Classe : {{ eleve.classe.nom }}</p>
+                </div>
+            </div>
+        </a>
+        {% empty %}
+        <div class="col-span-full text-center text-white">
+            Aucun élève trouvé.
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Scroll automatique après recherche -->
+{% if search_query %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const section = document.getElementById("eleves-section");
+    if (section) {
+        section.scrollIntoView({ behavior: "smooth" });
+    }
+});
+</script>
+{% endif %}
+{% endblock %} {% endcomment %}

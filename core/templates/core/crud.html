@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Créer un  - {% endblock %}
+
+<div class="container mx-auto p-6">
+
+    <h1 class="text-3xl font-bold mb-6 text-white">Gestion des Semestres Totaux</h1>
+
+    {% if mode == 'create' %}
+        <h2 class="text-xl text-blue-400 mb-3">Créer un Semestre Total</h2>
+    {% elif mode == 'edit' %}
+        <h2 class="text-xl text-yellow-400 mb-3">Modifier un Semestre Total</h2>
+    {% endif %}
+
+    {% if mode != 'list' %}
+    <form method="POST" class="bg-gray-800 p-4 rounded-lg shadow">
+        {% csrf_token %}
+        {{ form.as_p }}
+
+        <button type="submit" class="bg-blue-500 px-4 py-2 rounded text-white">Enregistrer</button>
+
+        <a href="{% url 'semestre_total_crud' %}"
+           class="bg-gray-600 px-4 py-2 rounded text-white ml-2">Annuler</a>
+    </form>
+    {% endif %}
+
+    <h2 class="text-2xl mt-8 text-white mb-4">Liste des Semestres</h2>
+
+    <a href="?action=create" class="bg-green-600 text-white px-4 py-2 rounded mb-4 inline-block">
+        + Nouveau Semestre
+    </a>
+
+    <table class="w-full bg-gray-800 text-white rounded-lg mt-4">
+        <tr class="bg-gray-700">
+            <th class="p-2">School</th>
+            <th class="p-2">Classe</th>
+            <th class="p-2">Actions</th>
+        </tr>
+
+        {% for s in semestres %}
+        <tr class="border-b border-gray-700">
+            <td class="p-2">{{ s.school }}</td>
+            <td class="p-2">{{ s.classe }}</td>
+            <td class="p-2">
+                <a href="?action=edit&id={{ s.id }}" class="text-yellow-400">Modifier</a> |
+                <a href="?action=delete&id={{ s.id }}"
+                   onclick="return confirm('Supprimer ?');"
+                   class="text-red-400">Supprimer</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+
+</div>
+{% endblock %}

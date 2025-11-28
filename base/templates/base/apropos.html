@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}À propos de nous - School Note{% endblock %}
+
+{% block content %}
+<style>
+/* --- Animations personnalisées --- */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.fade-in {
+  opacity: 0;
+  animation: fadeInUp 1s ease-out forwards;
+}
+.zoom-in {
+  opacity: 0;
+  animation: zoomIn 1s ease-out forwards;
+}
+.fade-delay {
+  animation-delay: 0.5s;
+}
+.zoom-delay {
+  animation-delay: 0.7s;
+}
+</style>
+
+<div class="bg-gray-900 text-gray-100 min-h-screen py-16">
+  <div class="container mx-auto px-6 lg:px-12">
+
+    <!-- En-tête -->
+    <div class="text-center mb-16 fade-in">
+      <h1 class="text-5xl font-bold text-blue-400 mb-4">
+        À propos de <span class="text-white">School Note Drc</span>
+      </h1>
+      <p class="text-lg text-gray-300 max-w-3xl mx-auto">
+        Une solution numérique complète pour simplifier la gestion de calcul des bulletins scolaire et moderniser le suivi des notes des élèves en temps réel.
+      </p>
+    </div>
+
+    <!-- Mission -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center mb-20">
+      <div class="zoom-in">
+        <img src="{% static 'img/slid.jpg' %}" 
+             alt="Dashboard School Note" 
+             class="rounded-2xl shadow-lg w-full transition-transform duration-500 hover:scale-105">
+      </div>
+      <div class="fade-in fade-delay">
+        <h2 class="text-3xl font-semibold text-blue-300 mb-4">Notre mission</h2>
+        <p class="text-gray-300 leading-relaxed">
+          School Note Drc est né du constat que le calcul manuel des bulletins et la compilation des notes prennent
+          beaucoup de temps et sont souvent sources d’erreurs. Nous apportons une solution intuitive et rapide pour
+          automatiser ces tâches tout en renforçant la fiabilité des résultats.
+        </p>
+        <p class="text-gray-300 leading-relaxed mt-4">
+          Nous visons à <strong>faciliter le travail des enseignants</strong> et à 
+          <strong>motiver les élèves</strong> en leur offrant un suivi clair et continu de leurs performances.
+        </p>
+      </div>
+    </div>
+
+    <!-- Suivi en temps réel -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center mb-20">
+      <div class="fade-in">
+        <h2 class="text-3xl font-semibold text-blue-300 mb-4">Un suivi en temps réel</h2>
+        <p class="text-gray-300 leading-relaxed">
+          Grâce à School Note Drc, les élèves peuvent consulter leurs notes dès leur publication, suivre leur progression
+          tout au long de l’année et identifier rapidement les matières où progresser.  
+        </p>
+        <p class="text-gray-300 leading-relaxed mt-4">
+          Cette transparence renforce la communication entre enseignants, élèves et parents, créant un cadre scolaire
+          plus dynamique et motivant.
+        </p>
+      </div>
+      <div class="zoom-in zoom-delay">
+        <img src="{% static 'img/notesuivi2.jpg' %}" 
+             alt="Suivi des élèves" 
+             class="rounded-2xl shadow-lg w-full transition-transform duration-500 hover:scale-105">
+      </div>
+    </div>
+
+    <!-- Formation -->
+    <div class="text-center mb-20 fade-in">
+      <h2 class="text-3xl font-semibold text-blue-300 mb-4">Formation & Accompagnement</h2>
+      <p class="text-gray-300 max-w-3xl mx-auto leading-relaxed">
+        Nous accompagnons chaque école dans la mise en production de notre service et proposons 
+        des <strong>mini-formations personnalisées</strong> pour les professeurs, superviseurs et élèves.  
+        Notre équipe reste disponible pour vous guider dans la prise en main de la plateforme.
+      </p>
+      <img src="{% static 'img/home-formation.jpg' %}" 
+           alt="Formation enseignants" 
+           class="rounded-2xl shadow-lg mt-8 mx-auto w-2/3 transition-transform duration-500 hover:scale-105 zoom-in">
+    </div>
+
+    <!-- Conclusion -->
+    <div class="text-center mt-24 fade-in fade-delay">
+      <h3 class="text-2xl font-semibold text-blue-300 mb-2">School Note Drc – L’innovation au service de l’éducation</h3>
+      <p class="text-gray-400 text-lg max-w-2xl mx-auto mb-6">
+        Ensemble, modernisons la gestion de calcul des bulletins scolaire et permettons à chaque élève de progresser sereinement.
+      </p>
+      <a href="{% url 'index' %}" 
+         class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg shadow-md transition duration-300">
+        Retour à l’accueil
+      </a>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// Déclenche l’animation au scroll
+const elements = document.querySelectorAll('.fade-in, .zoom-in');
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) entry.target.style.opacity = 1;
+  });
+}, { threshold: 0.1 });
+
+elements.forEach(el => observer.observe(el));
+</script>
+{% endblock %}
+
+
+{% comment %} {% extends "base.html" %}
+{% load static %}
+
+{% block title %}À propos de nous - School Note{% endblock %}
+
+{% block content %}
+<!-- Section principale -->
+<div class="bg-gray-900 text-gray-100 min-h-screen py-16">
+    <div class="container mx-auto px-6 lg:px-12">
+
+        <!-- En-tête -->
+        <div class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-blue-400 mb-4">À propos de <span class="text-white">School Note</span></h1>
+            <p class="text-lg text-gray-300 max-w-3xl mx-auto">
+                Nous sommes un service numérique scolaire dédié à la modernisation et à la simplification de la gestion des notes et bulletins scolaires.
+            </p>
+        </div>
+
+        <!-- Section image et présentation -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center mb-16">
+            <div>
+                <img src="{% static 'images/classroom_dashboard.jpg' %}" alt="Dashboard School Note" class="rounded-2xl shadow-lg w-full">
+            </div>
+            <div>
+                <h2 class="text-2xl font-semibold text-blue-300 mb-4">Notre mission</h2>
+                <p class="text-gray-300 leading-relaxed">
+                    School Note a été créée pour résoudre un problème courant dans les écoles : 
+                    le calcul manuel des bulletins et la compilation des notes, souvent chronophages et sources d’erreurs. 
+                    Grâce à notre plateforme, les professeurs, superviseurs et administrateurs scolaires peuvent désormais 
+                    gérer les notes des élèves en un temps record, avec une précision optimale.
+                </p>
+                <p class="text-gray-300 leading-relaxed mt-4">
+                    Notre objectif est de <strong>faciliter le travail des enseignants</strong> et de 
+                    <strong>motiver les élèves</strong> en leur permettant de suivre leur progression en temps réel, 
+                    favorisant ainsi une amélioration continue des performances.
+                </p>
+            </div>
+        </div>
+
+        <!-- Section élèves et suivi -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center mb-16">
+            <div class="order-2 lg:order-1">
+                <h2 class="text-2xl font-semibold text-blue-300 mb-4">Un suivi en temps réel pour les élèves</h2>
+                <p class="text-gray-300 leading-relaxed">
+                    Avec School Note, chaque élève peut consulter ses notes dès qu’elles sont disponibles, 
+                    visualiser sa progression tout au long de l’année scolaire et identifier rapidement 
+                    les matières nécessitant plus d’efforts.  
+                </p>
+                <p class="text-gray-300 leading-relaxed mt-4">
+                    Cette transparence favorise une meilleure communication entre élèves, enseignants et parents, 
+                    tout en créant un environnement scolaire plus motivant et plus équitable.
+                </p>
+            </div>
+            <div class="order-1 lg:order-2">
+                <img src="{% static 'images/student_progress.jpg' %}" alt="Suivi des élèves" class="rounded-2xl shadow-lg w-full">
+            </div>
+        </div>
+
+        <!-- Section formation et accompagnement -->
+        <div class="text-center mb-16">
+            <h2 class="text-2xl font-semibold text-blue-300 mb-4">Formation & Accompagnement</h2>
+            <p class="text-gray-300 max-w-3xl mx-auto leading-relaxed">
+                Nous accompagnons chaque école dans la mise en production de notre service 
+                et offrons de <strong>mini-formations personnalisées</strong> pour aider les professeurs, superviseurs 
+                et élèves à bien utiliser la plateforme.  
+                Notre équipe reste disponible pour tout besoin d’assistance ou d’amélioration.
+            </p>
+            <img src="{% static 'images/training_team.jpg' %}" alt="Formation enseignants" class="rounded-2xl shadow-lg mt-8 mx-auto w-2/3">
+        </div>
+
+        <!-- Section finale -->
+        <div class="text-center mt-20">
+            <h3 class="text-2xl font-semibold text-blue-300 mb-2">School Note – L’innovation au service de l’éducation</h3>
+            <p class="text-gray-400 text-lg max-w-2xl mx-auto">
+                Ensemble, modernisons la gestion scolaire et aidons chaque élève à atteindre son plein potentiel.
+            </p>
+            <a href="{% url 'home' %}" class="mt-6 inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg shadow-md transition duration-300">
+                Retour à l’accueil
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %} {% endcomment %}
