@@ -29,9 +29,16 @@ SECRET_KEY = 'django-insecure-k!wquykab(6m53my4hx@u^2r!gpx1)u+a*wpn4wr2(288bu4*6
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['16.28.47.173', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['16.28.47.173', 'localhost', '127.0.0.1','schoolnotedrc.com','www.schoolnotedrc.com']
 
 
+# CSRF_COOKIE_SECURE = False
+    
+CSRF_TRUSTED_ORIGINS = [
+    "https://schoolnotedrc.com",
+    "https://www.schoolnotedrc.com",  # ajoute aussi la version avec www si nécessaire
+]
+# Application definition
 
 # Application definition
 
