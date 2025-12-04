@@ -38,53 +38,51 @@
 
        <!-- Section Écoles supervisées -->
        {% if ecoles_supervisees %}
-       <div class="mt-12">
-           <h3 class="text-2xl font-semibold text-indigo-400 mb-6 text-center">Écoles supervisées</h3>
-           <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-               {% for relation in ecoles_supervisees %}
-               
-               <div class="relative transform hover:-translate-y-2 hover:shadow-2xl transition duration-300">
-                <!-- Lien invisible couvrant toute la carte -->
-        <a href="{% url 'school_detail' relation.school.id %}" 
-        class="absolute inset-0 z-10"></a>
-                   <div class="bg-gray-700 rounded-xl shadow-md overflow-hidden relative">
-                       {% if relation.school.photo %}
-                           <img src="{{ relation.school.photo.url }}" alt="{{ relation.school.nom }}"
-                                class="w-full h-40 object-cover">
-                       {% else %}
-                           <img src="https://images.unsplash.com/photo-1571260899304-425eee4c7efc?auto=format&fit=crop&w=800&q=80"
-                                alt="School" class="w-full h-40 object-cover">
-                       {% endif %}
-       
-                       <!-- Boutons action -->
-                       <div class="absolute top-2 left-2 flex flex-col gap-1">
-                           <!-- PDF -->
-                           
-                           <!-- Infos École -->
-                           <a href="{% url 'info_school_detail' relation.school.id %}" 
-                              class="bg-green-500 hover:bg-green-600 text-white text-xs font-semibold px-3 py-1 rounded shadow">
-                               Infos École
-                           </a>
-                           <!-- Fondateur -->
-                           <a href="{% url 'fondateur_school' relation.school.id %}" 
-                              class="bg-yellow-500 hover:bg-yellow-600 text-white text-xs font-semibold px-3 py-1 rounded shadow">
-                               Fondateur
-                           </a>
-                       </div>
-       
-                       <div class="p-4 text-center">
-                           <h4 class="text-lg font-semibold text-white mb-1">{{ relation.school.nom }}</h4>
-                           <p class="text-gray-400 text-sm mb-2">{{ relation.school.type_ecole|capfirst }}</p>
-                           <p class="text-indigo-400 font-medium">{{ relation.school.annee_scolaire }}</p>
-                       </div>
-                   </div>
-               </div>
-               {% endfor %}
-           </div>
-       </div>
-       {% else %}
-       <p class="mt-10 text-gray-400 text-center">Aucune école à superviser pour le moment.</p>
-       {% endif %}
+<div class="mt-12">
+    <h3 class="text-2xl font-semibold text-indigo-400 mb-6 text-center">Écoles supervisées</h3>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        {% for relation in ecoles_supervisees %}
+        
+        <div class="relative transform hover:-translate-y-2 hover:shadow-2xl transition duration-300">
+            <a href="{% url 'school_detail' relation.school.id %}" 
+            class="absolute inset-0 z-10"></a>
+            
+            <div class="bg-gray-700 rounded-xl shadow-md overflow-hidden relative">
+                
+                {% if relation.school.photo %}
+                    <img src="{{ relation.school.photo.url }}" alt="{{ relation.school.nom }}"
+                         class="w-full h-40 object-cover">
+                {% else %}
+                    <img src="https://images.unsplash.com/photo-1571260899304-425eee4c7efc?auto=format&fit=crop&w=800&q=80"
+                         alt="School" class="w-full h-40 object-cover">
+                {% endif %}
+        
+                <div class="absolute top-2 left-2 flex flex-col gap-1 z-20"> 
+                    
+                    <a href="{% url 'info_school_detail' relation.school.id %}" 
+                       class="bg-green-500 hover:bg-green-600 text-white text-xs font-semibold px-3 py-1 rounded shadow">
+                        Infos École
+                    </a>
+                    
+                    <a href="{% url 'fondateur_school' relation.school.id %}" 
+                       class="bg-yellow-500 hover:bg-yellow-600 text-white text-xs font-semibold px-3 py-1 rounded shadow">
+                        Fondateur
+                    </a>
+                </div>
+        
+                <div class="p-4 text-center">
+                    <h4 class="text-lg font-semibold text-white mb-1">{{ relation.school.nom }}</h4>
+                    <p class="text-gray-400 text-sm mb-2">{{ relation.school.type_ecole|capfirst }}</p>
+                    <p class="text-indigo-400 font-medium">{{ relation.school.annee_scolaire }}</p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% else %}
+<p class="mt-10 text-gray-400 text-center">Aucune école à superviser pour le moment.</p>
+{% endif %}
        
        {% comment %} {% if ecoles_supervisees %}
        <div class="mt-12">

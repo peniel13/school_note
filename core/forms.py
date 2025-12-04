@@ -625,8 +625,8 @@ class InfoSchoolForm(forms.ModelForm):
     class Meta:
         model = InfoSchool
         fields = [
-            "school",
-            "annee_scolaire",
+            
+            
             "presentation",
             "mission",
             "valeurs",
@@ -674,7 +674,7 @@ class FondateurSchoolForm(forms.ModelForm):
     class Meta:
         model = FondateurSchool
         fields = [
-            'school',
+            
             'nom_complet',
             'biographie',
             'message_annee',
@@ -702,9 +702,7 @@ class FondateurSchoolForm(forms.ModelForm):
                 'rows': 3,
                 'placeholder': 'Vision du fondateur'
             }),
-            'school': forms.Select(attrs={
-                'class': 'form-control'
-            }),
+            
         }
 
 

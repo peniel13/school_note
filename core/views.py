@@ -10539,6 +10539,9 @@ from django.shortcuts import render, get_object_or_404, redirect
 from .models import School, FondateurSchool
 from .forms import FondateurSchoolForm
 
+
+from django.contrib import messages
+
 def fondateur_school_view(request, school_id):
     school = get_object_or_404(School, id=school_id)
     try:
@@ -10551,11 +10554,15 @@ def fondateur_school_view(request, school_id):
             form = FondateurSchoolForm(request.POST, request.FILES, instance=fondateur)
         else:
             form = FondateurSchoolForm(request.POST, request.FILES)
+
         if form.is_valid():
             fondateur = form.save(commit=False)
             fondateur.school = school
             fondateur.save()
+            messages.success(request, "Informations du fondateur enregistrées avec succès !")
             return redirect('fondateur_school', school_id=school.id)
+        else:
+            messages.error(request, "Une erreur est survenue. Veuillez vérifier les informations fournies.")
     else:
         form = FondateurSchoolForm(instance=fondateur)
 
@@ -10564,6 +10571,32 @@ def fondateur_school_view(request, school_id):
         'fondateur': fondateur,
         'form': form,
     })
+
+# def fondateur_school_view(request, school_id):
+#     school = get_object_or_404(School, id=school_id)
+#     try:
+#         fondateur = FondateurSchool.objects.get(school=school)
+#     except FondateurSchool.DoesNotExist:
+#         fondateur = None
+
+#     if request.method == 'POST':
+#         if fondateur:
+#             form = FondateurSchoolForm(request.POST, request.FILES, instance=fondateur)
+#         else:
+#             form = FondateurSchoolForm(request.POST, request.FILES)
+#         if form.is_valid():
+#             fondateur = form.save(commit=False)
+#             fondateur.school = school
+#             fondateur.save()
+#             return redirect('fondateur_school', school_id=school.id)
+#     else:
+#         form = FondateurSchoolForm(instance=fondateur)
+
+#     return render(request, 'core/fondateur_school.html', {
+#         'school': school,
+#         'fondateur': fondateur,
+#         'form': form,
+#     })
 
 
 from django.shortcuts import render
