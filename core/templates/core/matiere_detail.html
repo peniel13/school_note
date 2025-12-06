@@ -24,7 +24,7 @@
         </div>
 
         <!-- Onglets -->
-        <div class="mb-6 flex justify-center">
+        {% comment %} <div class="mb-6 flex justify-center">
             <button class="tab-button bg-indigo-600 text-white px-4 py-2 rounded-l-md" onclick="openTab(event, 'eleves')">Élèves</button>
             {% if request.user == matiere.prof %}
                 <button class="tab-button bg-gray-700 text-white px-4 py-2" onclick="openTab(event, 'notation')">
@@ -34,8 +34,19 @@
                     Ajouter Épreuve
                 </button>
             {% endif %}
+        </div> {% endcomment %}
+        <div class="mb-6 flex justify-center">
+            <button class="tab-button bg-indigo-600 text-white px-4 py-2 rounded-l-md" onclick="openTab(event, 'eleves')">Élèves</button>
+            
+            {% if can_grade %}
+                <button class="tab-button bg-gray-700 text-white px-4 py-2" onclick="openTab(event, 'notation')">
+                    Ajouter Notation
+                </button>
+                <button class="tab-button bg-gray-700 text-white px-4 py-2 rounded-r-md" onclick="openTab(event, 'epreuve')">
+                    Ajouter Épreuve
+                </button>
+            {% endif %}
         </div>
-
         <!-- Onglet Élèves -->
         <div id="eleves" class="tab-content">
             <h3 class="text-xl font-semibold text-indigo-400 mb-4">Liste des élèves</h3>

@@ -22,8 +22,25 @@
                      class="w-24 h-24 rounded-full object-cover cursor-pointer"
                      onclick="openProfileModal('https://bootdey.com/img/Content/avatar/avatar7.png')">
             {% endif %}
-        </div>
+
+            
     
+                <p class="text-gray-300">Total Attendu : {{ total_attendu_annuel }}</p>
+            
+                {% if total_obtenu_annuel < total_attendu_annuel|floatdivide:2 %}
+                    <p class="text-red-500 font-bold">Total Obtenu : {{ total_obtenu_annuel }}</p>
+                {% else %}
+                    <p class="text-gray-300">Total Obtenu : {{ total_obtenu_annuel }}</p>
+                {% endif %}
+            
+                {% if pourcentage_total < 50 %}
+                    <p class="text-red-500 font-semibold text-lg">Pourcentage : {{ pourcentage_total|floatformat:2 }}%</p>
+                {% else %}
+                    <p class="text-green-400 font-semibold text-lg">Pourcentage : {{ pourcentage_total|floatformat:2 }}%</p>
+                {% endif %}
+            
+        </div>
+        
         <!-- Informations personnelles -->
         <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -86,7 +103,7 @@
             Voir la Situation de l'Élève
         </a>
     </div> {% endcomment %}
-    {% if not eleve.eleve or eleve.eleve != request.user %}
+   
 <div class="bg-gray-800 rounded-lg shadow-lg p-8 mb-8">
     <h2 class="text-2xl font-semibold text-white mb-4">Voir la Situation de l'Élève</h2>
     <p class="text-lg text-gray-300 mb-4">
@@ -97,7 +114,7 @@
         Voir la Situation de bulletin
     </a>
 </div>
-{% endif %}
+
 
     {% comment %} <div class="bg-gray-800 rounded-lg shadow-lg p-8 mb-8">
         <h2 class="text-2xl font-semibold text-white mb-4">Voir la Situation de l'Élève</h2>

@@ -47,13 +47,13 @@
                         <td class="px-4 py-2 text-gray-300">{{ n.note_attendue }}</td>
                         
                         <td class="px-4 py-2">
-                            {% if request.user == matiere.prof %}
+                            {% if can_edit %}
                                 <a href="{% url 'modifier_notation' n.id %}" class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded-md text-sm">Modifier</a>
                             {% endif %}
                         </td>
                         
                         <td class="px-4 py-2">
-                            {% if request.user == matiere.prof %}
+                            {% if can_edit %}
                                 <button type="button"
                                     onclick="confirmDeleteNotation('{{ n.id }}', '{{ n.eleve.nom }}')"
                                     class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-sm">

@@ -1410,22 +1410,104 @@ from .models import Matiere, Eleve, PeriodePrimaire, PeriodeSecondaire,Notation,
 #         "periodes_secondaire": periodes_secondaire,
 #     }
 #     return render(request, "core/matiere_detail.html", context)
+# @login_required(login_url="signin")
+# def matiere_detail(request, matiere_id):
+#     matiere = get_object_or_404(Matiere, id=matiere_id)
+#     classe = matiere.classe
+#     eleves = classe.eleves.all()
+
+#     # Récupération des périodes selon le type d'école
+#     periodes_primaire = PeriodePrimaire.objects.filter(school=classe.school, is_active=True)
+#     periodes_secondaire = PeriodeSecondaire.objects.filter(school=classe.school, is_active=True)
+
+#     # Formulaires
+#     form_notation = NotationForm(classe=classe)
+#     form_epreuve = EpreuveForm(classe=classe)
+
+#     # Gestion POST (notation ou épreuve)
+#     if request.method == "POST":
+#         if "ajouter_epreuve" in request.POST:
+#             # --- Ajout d'une épreuve ---
+#             form_epreuve = EpreuveForm(request.POST, classe=classe)
+#             if form_epreuve.is_valid():
+#                 epreuve = form_epreuve.save(commit=False)
+#                 epreuve.matiere = matiere
+#                 epreuve.save()
+#                 messages.success(request, f"Épreuve « {epreuve.nom} » ajoutée avec succès.")
+#                 return redirect("matiere_detail", matiere_id=matiere.id)
+#             else:
+#                 messages.error(request, "Erreur lors de l’ajout de l’épreuve. Vérifiez les champs.")
+#         else:
+#             # --- Ajout d'une notation ---
+#             form_notation = NotationForm(request.POST, classe=classe)
+#             if form_notation.is_valid():
+#                 notation = form_notation.save(commit=False)
+#                 notation.matiere = matiere
+
+#                 # Lier la période correcte
+#                 if classe.school.type_ecole == "primaire":
+#                     notation.periode_primaire = form_notation.cleaned_data.get("periode_primaire")
+#                 else:
+#                     notation.periode_secondaire = form_notation.cleaned_data.get("periode_secondaire")
+
+#                 notation.save()
+#                 messages.success(request, f"Notation ajoutée pour {notation.eleve.nom} ({matiere.nom})")
+#                 return redirect("matiere_detail", matiere_id=matiere.id)
+#             else:
+#                 messages.error(request, "Erreur : vérifiez les champs de la notation.")
+
+#     # Récupération des notations et épreuves
+#     notations = Notation.objects.filter(matiere=matiere)
+#     epreuves = Epreuve.objects.filter(matiere=matiere)
+
+#     context = {
+#         "matiere": matiere,
+#         "classe": classe,
+#         "eleves": eleves,
+#         "form_notation": form_notation,
+#         "form_epreuve": form_epreuve,
+#         "notations": notations,
+#         "epreuves": epreuves,
+#         "periodes_primaire": periodes_primaire,
+#         "periodes_secondaire": periodes_secondaire,
+#     }
+#     return render(request, "core/matiere_detail.html", context)
+from django.shortcuts import get_object_or_404, redirect, render
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+# Assurez-vous d'importer vos modèles/formulaires
+# from .models import Matiere, Notation, Epreuve, PeriodePrimaire, PeriodeSecondaire
+# from .forms import NotationForm, EpreuveForm, MatiereForm
+
 @login_required(login_url="signin")
 def matiere_detail(request, matiere_id):
     matiere = get_object_or_404(Matiere, id=matiere_id)
     classe = matiere.classe
     eleves = classe.eleves.all()
 
-    # Récupération des périodes selon le type d'école
+    # Définition de l'utilisateur autorisé à noter :
+    prof_matiere = matiere.prof
+    titulaire_classe = classe.titulaire
+
+    # Récupération des périodes (inchangé)
     periodes_primaire = PeriodePrimaire.objects.filter(school=classe.school, is_active=True)
     periodes_secondaire = PeriodeSecondaire.objects.filter(school=classe.school, is_active=True)
 
-    # Formulaires
+    # Formulaires (inchangé)
     form_notation = NotationForm(classe=classe)
     form_epreuve = EpreuveForm(classe=classe)
 
-    # Gestion POST (notation ou épreuve)
+    # ------------------------------------------------------------------
+    # 🚨 GESTION POST (notation ou épreuve)
     if request.method == "POST":
+        
+        # 🎯 VÉRIFICATION D'AUTORISATION
+        # Seul le prof de la matière OU le titulaire de la classe peut POSTer
+        if request.user != prof_matiere and request.user != titulaire_classe:
+            messages.error(request, "Autorisation refusée : Vous n'êtes ni le professeur de cette matière, ni le titulaire de la classe.")
+            return redirect("matiere_detail", matiere_id=matiere.id)
+        # ------------------------------------------------------------------
+
         if "ajouter_epreuve" in request.POST:
             # --- Ajout d'une épreuve ---
             form_epreuve = EpreuveForm(request.POST, classe=classe)
@@ -1456,10 +1538,10 @@ def matiere_detail(request, matiere_id):
             else:
                 messages.error(request, "Erreur : vérifiez les champs de la notation.")
 
-    # Récupération des notations et épreuves
+    # Récupération des notations et épreuves (inchangé)
     notations = Notation.objects.filter(matiere=matiere)
     epreuves = Epreuve.objects.filter(matiere=matiere)
-
+    can_grade = (request.user == matiere.prof) or (request.user == classe.titulaire)
     context = {
         "matiere": matiere,
         "classe": classe,
@@ -1470,9 +1552,9 @@ def matiere_detail(request, matiere_id):
         "epreuves": epreuves,
         "periodes_primaire": periodes_primaire,
         "periodes_secondaire": periodes_secondaire,
+        "can_grade": can_grade,  # 👈 Passez la permission au template
     }
     return render(request, "core/matiere_detail.html", context)
-
 
 @login_required(login_url="signin")
 def periode_detail(request, matiere_id, periode_id):
@@ -1486,16 +1568,51 @@ def periode_detail(request, matiere_id, periode_id):
     else:
         periode = get_object_or_404(PeriodeSecondaire, id=periode_id)
         notations = Notation.objects.filter(matiere=matiere, periode_secondaire=periode)
+    # 🎯 Calculer l'autorisation d'édition/suppression ici
+    is_prof = request.user == matiere.prof
+    is_titulaire = request.user == classe.titulaire
+    is_admin = request.user.is_superuser # Optionnel: Inclure les super-utilisateurs
 
+    can_edit_or_delete = is_prof or is_titulaire or is_admin
+    
     context = {
         "matiere": matiere,
         "classe": classe,
         "periode": periode,
         "notations": notations,
+        "can_edit": can_edit_or_delete,
     }
     return render(request, "core/periode_detail.html", context)
 
 
+# views.py
+# @login_required(login_url="signin")
+# def modifier_notation(request, notation_id):
+#     notation = get_object_or_404(Notation, id=notation_id)
+#     matiere = notation.matiere
+#     classe = matiere.classe
+
+#     # Choisir la période selon le type d'école
+#     if classe.school.type_ecole == "primaire":
+#         periode = notation.periode_primaire
+#     else:
+#         periode = notation.periode_secondaire
+
+#     if request.method == "POST":
+#         # On ne modifie que les notes
+#         notation.note_attendue = request.POST.get("note_attendue")
+#         notation.note_obtenue = request.POST.get("note_obtenue")
+#         notation.save()
+#         messages.success(request, f"Notation mise à jour pour {notation.eleve.nom} ({matiere.nom})")
+#         return redirect("periode_detail", matiere_id=matiere.id, periode_id=periode.id)
+
+#     context = {
+#         "notation": notation,
+#         "matiere": matiere,
+#         "classe": classe,
+#         "periode": periode,
+#     }
+#     return render(request, "core/modifier_notation.html", context)
 # views.py
 @login_required(login_url="signin")
 def modifier_notation(request, notation_id):
@@ -1503,11 +1620,21 @@ def modifier_notation(request, notation_id):
     matiere = notation.matiere
     classe = matiere.classe
 
-    # Choisir la période selon le type d'école
+    # Déterminer la période
     if classe.school.type_ecole == "primaire":
         periode = notation.periode_primaire
     else:
         periode = notation.periode_secondaire
+        
+    # 🎯 VÉRIFICATION D'AUTORISATION
+    prof_matiere = matiere.prof
+    titulaire_classe = classe.titulaire
+    
+    if request.user != prof_matiere and request.user != titulaire_classe:
+        messages.error(request, "Autorisation refusée : Vous ne pouvez pas modifier cette notation.")
+        # Redirection vers la page de la période
+        return redirect("periode_detail", matiere_id=matiere.id, periode_id=periode.id)
+
 
     if request.method == "POST":
         # On ne modifie que les notes
@@ -1526,17 +1653,47 @@ def modifier_notation(request, notation_id):
     return render(request, "core/modifier_notation.html", context)
 
 
-
-
+# views.py
 @login_required(login_url="signin")
 def supprimer_notation(request, notation_id):
     notation = get_object_or_404(Notation, id=notation_id)
     matiere = notation.matiere
-    periode_id = notation.periode_primaire.id if notation.periode_primaire else notation.periode_secondaire.id
+    classe = matiere.classe
+    
+    # Déterminer la période et son ID pour la redirection
+    if classe.school.type_ecole == "primaire":
+        periode_redir_id = notation.periode_primaire.id if notation.periode_primaire else None
+    else:
+        periode_redir_id = notation.periode_secondaire.id if notation.periode_secondaire else None
+
+    # 🎯 VÉRIFICATION D'AUTORISATION
+    prof_matiere = matiere.prof
+    titulaire_classe = classe.titulaire
+    
+    if request.user != prof_matiere and request.user != titulaire_classe:
+        messages.error(request, "Autorisation refusée : Vous ne pouvez pas supprimer cette notation.")
+        # Redirection sécurisée
+        return redirect('periode_detail', matiere_id=matiere.id, periode_id=periode_redir_id)
+        
     if request.method == "POST":
         notation.delete()
         messages.success(request, "Notation supprimée avec succès.")
-    return redirect('periode_detail', matiere_id=matiere.id, periode_id=periode_id)
+    
+    # Redirection après action (GET ou POST)
+    if periode_redir_id:
+        return redirect('periode_detail', matiere_id=matiere.id, periode_id=periode_redir_id)
+    else:
+        # Cas exceptionnel si la période n'était pas liée correctement
+        return redirect('matiere_detail', matiere_id=matiere.id)
+# @login_required(login_url="signin")
+# def supprimer_notation(request, notation_id):
+#     notation = get_object_or_404(Notation, id=notation_id)
+#     matiere = notation.matiere
+#     periode_id = notation.periode_primaire.id if notation.periode_primaire else notation.periode_secondaire.id
+#     if request.method == "POST":
+#         notation.delete()
+#         messages.success(request, "Notation supprimée avec succès.")
+#     return redirect('periode_detail', matiere_id=matiere.id, periode_id=periode_id)
 
 
 from django.shortcuts import render, get_object_or_404
@@ -1573,13 +1730,27 @@ def details_eleve(request, eleve_id):
                 'total_attendu': total_attendu,
                 'total_obtenu': total_obtenu,
                 'pourcentage': pourcentage,
-            }
+    
+    
+           }
+    # Calcul des données pour chaque élève
+    
+        # Calcul des données pour l'élève (sur l'année entière)
+        notations_annuelles = Notation.objects.filter(eleve=eleve) # Utiliser un nom distinct
 
+    # ⭐ Renommer les variables pour ne pas les confondre avec les totaux de la boucle
+        total_attendu_annuel = notations_annuelles.aggregate(Sum("note_attendue"))["note_attendue__sum"] or 0
+        total_obtenu_annuel = notations_annuelles.aggregate(Sum("note_obtenue"))["note_obtenue__sum"] or 0
+
+        pourcentage_total = (total_obtenu_annuel / total_attendu_annuel * 100) if total_attendu_annuel > 0 else 0
     context = {
         'eleve': eleve,
         'notations_par_periode': notations_par_periode,
         'periodes': periodes,
         'school': school,
+        "total_attendu_annuel": total_attendu_annuel,
+        "total_obtenu_annuel": total_obtenu_annuel,
+        "pourcentage_total": pourcentage_total,
     }
 
     return render(request, 'core/details_eleve.html', context)
@@ -8228,9 +8399,9 @@ def eleves_list(request, school_id):
     # Appliquer la recherche si un nom est saisi
     if search_query:
         eleves = eleves.filter(nom__icontains=search_query)
-
+           
     # --- Pagination ---
-    paginator = Paginator(eleves, 12)  # 12 élèves par page
+    paginator = Paginator(eleves, 8)  # 12 élèves par page
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 

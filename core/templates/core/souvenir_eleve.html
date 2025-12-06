@@ -354,8 +354,12 @@
     .hero-overlay {
         content: '';
         position: absolute;
-        inset: 0;
-        background: rgba(26, 54, 93, 0.65); /* bleu foncé semi-transp */
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        /* Opacité augmentée à 0.7 pour un contraste efficace */
+        background: rgba(26, 54, 93, 0.7); 
     }
     
     /* CONTENU À GAUCHE */
@@ -1030,8 +1034,204 @@
           </div>
       
       </section>
-      
       <style>
+        /* --------- BASE --------- */
+        .class-detail-page {
+            padding: 40px;
+            font-family: "Lato", sans-serif;
+            background: #ffffff;
+            color: #222;
+        }
+    
+        /* --------- HEADER --------- */
+        .class-detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 35px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 15px;
+        }
+        .class-name {
+            font-size: 3rem;
+            margin: 0;
+            font-family: "Playfair Display", serif;
+        }
+        .class-small-info span {
+            color: #1a365d;
+            font-weight: 700;
+        }
+        .header-badge {
+            background: #1a365d;
+            color: white;
+            padding: 7px 15px;
+            border-radius: 20px;
+            font-weight: 700;
+        }
+    
+        /* --------- PHOTO --------- */
+        .class-photo-wrapper {
+            width: 100%;
+            height: 300px;
+            overflow: hidden;
+            border-radius: 8px;
+            margin-bottom: 35px;
+            border: 3px solid #d4af37;
+        }
+        .class-photo {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+    
+        /* --------- GRID PRINCIPALE --------- */
+        .detail-grid {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 40px;
+        }
+    
+        /* --------- SIDEBAR --------- */
+        .detail-sidebar .box-title {
+            font-family: "Playfair Display", serif;
+            font-size: 1rem;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+            color: #1a365d;
+        }
+    
+        /* PROF */
+        .teacher-box {
+            border: 1px solid #eee;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        .teacher-profile {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .teacher-avatar img {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #d4af37;
+        }
+        .teacher-info h4 {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 700;
+        }
+        .teacher-role {
+            margin: 0;
+            font-size: 0.85rem;
+            color: #777;
+        }
+        .teacher-contact {
+            margin-top: 5px;
+        }
+        .teacher-bio {
+            margin-top: 10px;
+            font-size: 0.87rem;
+            color: #444;
+            line-height: 1.5;
+        }
+    
+        /* MOT DES ELEVE */
+        .class-quote-box {
+            margin-top: 25px;
+            padding: 20px;
+            border-left: 4px solid #d4af37;
+            background: #fafafa;
+            border-radius: 6px;
+        }
+        .quote-text {
+            font-family: "Playfair Display", serif;
+            font-style: italic;
+            color: #555;
+            font-size: 1.1rem;
+        }
+    
+        /* --------- ÉLÈVES --------- */
+        .students-box .box-title {
+            margin-bottom: 20px;
+        }
+        .students-list {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 15px 10px;
+        }
+        .student-card {
+            text-align: center;
+            break-inside: avoid;
+        }
+        .student-avatar {
+            width: 50px;
+            height: 50px;
+            margin: auto;
+            border-radius: 50%;
+            border: 2px solid #eee;
+            padding: 3px;
+        }
+        .student-avatar img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        .student-name {
+            margin-top: 5px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+        .no-students {
+            color: #888;
+            grid-column: 1 / -1;
+        }
+    
+        /* --------- RESPONSIVE --------- */
+        @media (max-width: 768px) {
+            .detail-grid {
+                grid-template-columns: 1fr;
+            }
+            .students-list {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 20px;
+            }
+            .student-avatar {
+                width: 60px;
+                height: 60px;
+            }
+            .student-name {
+                font-size: 0.85rem;
+            }
+        }
+    
+        /* --------- PRINT --------- */
+        @media print {
+            .detail-grid {
+                break-inside: auto;
+            }
+            .student-card {
+                break-inside: avoid;
+            }
+            .students-list {
+                grid-template-columns: repeat(8, 1fr) !important;
+            }
+            .student-avatar {
+                width: 50px;
+                height: 50px;
+            }
+            .student-name {
+                font-size: 0.75rem;
+            }
+        }
+    </style>
+    
+      {% comment %} <style>
           /* --------- BASE --------- */
           .class-detail-page {
               padding: 40px;
@@ -1210,7 +1410,7 @@
                   grid-template-columns: repeat(5, 1fr) !important;
               }
           }
-      </style>
+      </style> {% endcomment %}
       
       <!-- =========================
      STATISTIQUES DE LA CLASSE
